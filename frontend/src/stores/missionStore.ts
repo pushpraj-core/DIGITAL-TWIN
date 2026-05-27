@@ -19,6 +19,7 @@ interface MissionState {
   missionType: MissionType;
   isAnalyzing: boolean;
   isPlanning: boolean;
+  isFetchingTerrain: boolean;
   activePanel: string;
   selectedRouteId: string | null;
 
@@ -33,6 +34,7 @@ interface MissionState {
   setMissionTimeline: (timeline: MissionTimeline | null) => void;
   setIsAnalyzing: (val: boolean) => void;
   setIsPlanning: (val: boolean) => void;
+  setIsFetchingTerrain: (val: boolean) => void;
   setActivePanel: (panel: string) => void;
   setSelectedRouteId: (id: string | null) => void;
   clearAll: () => void;
@@ -48,6 +50,7 @@ export const useMissionStore = create<MissionState>((set) => ({
   missionType: 'safest',
   isAnalyzing: false,
   isPlanning: false,
+  isFetchingTerrain: false,
   activePanel: 'upload',
   selectedRouteId: null,
 
@@ -69,6 +72,7 @@ export const useMissionStore = create<MissionState>((set) => ({
   setMissionTimeline: (timeline) => set({ missionTimeline: timeline }),
   setIsAnalyzing: (val) => set({ isAnalyzing: val }),
   setIsPlanning: (val) => set({ isPlanning: val }),
+  setIsFetchingTerrain: (val) => set({ isFetchingTerrain: val }),
   setActivePanel: (panel) => set({ activePanel: panel }),
   setSelectedRouteId: (id) => set({ selectedRouteId: id }),
   clearAll: () =>

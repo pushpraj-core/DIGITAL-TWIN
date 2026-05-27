@@ -17,8 +17,14 @@ interface UIState {
   isReplaying: boolean;
   replayProgress: number;
 
-  clickMode: 'none' | 'start' | 'end' | 'threat' | 'observer';
+  clickMode: 'area' | 'none' | 'start' | 'end' | 'threat' | 'observer';
   activeThreatType: string | null;
+
+  // UX additions
+  missionStage: number; // 0: Upload, 1: Terrain/Risk, 2: Threats, 3: Routes, 4: Observation, 5: WhatIf/Timeline, 6: Assistant
+  hasCompletedOnboarding: boolean;
+  onboardingStep: number;
+  showOnboarding: boolean;
 
   toggleLeftPanel: () => void;
   toggleRightPanel: () => void;
@@ -35,8 +41,13 @@ interface UIState {
   setReplaySpeed: (speed: number) => void;
   setIsReplaying: (val: boolean) => void;
   setReplayProgress: (progress: number) => void;
-  setClickMode: (mode: 'none' | 'start' | 'end' | 'threat' | 'observer') => void;
+  setClickMode: (mode: 'area' | 'none' | 'start' | 'end' | 'threat' | 'observer') => void;
   setActiveThreatType: (type: string | null) => void;
+
+  setMissionStage: (stage: number) => void;
+  setHasCompletedOnboarding: (val: boolean) => void;
+  setOnboardingStep: (step: number) => void;
+  setShowOnboarding: (val: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -56,8 +67,14 @@ export const useUIStore = create<UIState>((set) => ({
   isReplaying: false,
   replayProgress: 0,
 
-  clickMode: 'none',
+  clickMode: 'area',
   activeThreatType: null,
+
+  // Load from localStorage or default to false
+  missionStage: 0,
+  hasCompletedOnboarding: localStorage.getItem('tactical_onboarding_done') === 'true',
+  onboardingStep: 0,
+  showOnboarding: localStorage.getItem('tactical_onboarding_done') !== 'true',
 
   toggleLeftPanel: () => set((s) => ({ leftPanelOpen: !s.leftPanelOpen })),
   toggleRightPanel: () => set((s) => ({ rightPanelOpen: !s.rightPanelOpen })),
@@ -76,4 +93,12 @@ export const useUIStore = create<UIState>((set) => ({
   setReplayProgress: (progress) => set({ replayProgress: progress }),
   setClickMode: (mode) => set({ clickMode: mode }),
   setActiveThreatType: (type) => set({ activeThreatType: type }),
+
+  setMissionStage: (stage) => set({ missionStage: stage }),
+  setHasCompletedOnboarding: (val) => {
+    localStorage.setItem('tactical_onboarding_done', val.toString());
+    set({ hasCompletedOnboarding: val });
+  },
+  setOnboardingStep: (step) => set({ onboardingStep: step }),
+  setShowOnboarding: (val) => set({ showOnboarding: val }),
 }));

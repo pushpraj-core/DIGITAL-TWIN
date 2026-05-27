@@ -15,16 +15,16 @@ const HeatmapOverlay = React.memo(() => {
   const { bounds, grid } = riskHeatmap;
   const rows = grid.length;
   const cols = grid[0].length;
-  const latStep = (bounds.north - bounds.south) / rows;
-  const lngStep = (bounds.east - bounds.west) / cols;
+  const latStep = (bounds.max_lat - bounds.min_lat) / rows;
+  const lngStep = (bounds.max_lng - bounds.min_lng) / cols;
 
   return (
     <>
       {grid.map((row, i) =>
         row.map((cell, j) => {
-          const south = bounds.south + i * latStep;
+          const south = bounds.min_lat + i * latStep;
           const north = south + latStep;
-          const west = bounds.west + j * lngStep;
+          const west = bounds.min_lng + j * lngStep;
           const east = west + lngStep;
 
           return (

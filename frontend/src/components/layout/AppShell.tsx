@@ -8,6 +8,7 @@ import BottomTimeline from './BottomTimeline';
 import TacticalMap from '../map/TacticalMap';
 import MapControls from '../map/MapControls';
 import LayerPanel from '../map/LayerPanel';
+import CoordinateOverlay from '../map/CoordinateOverlay';
 import {
   UploadPanel,
   TerrainPanel,
@@ -19,6 +20,8 @@ import {
   AIAssistantPanel,
 } from '../panels';
 import { useUIStore } from '../../stores/uiStore';
+import OnboardingTour from './OnboardingTour';
+import MissionGuide from './MissionGuide';
 
 const panelMap: Record<string, React.ComponentType> = {
   upload: UploadPanel,
@@ -100,6 +103,7 @@ export default function AppShell() {
           <TacticalMap />
           <MapControls />
           <LayerPanel />
+          <CoordinateOverlay />
         </div>
 
         {/* Right Panel */}
@@ -126,6 +130,10 @@ export default function AppShell() {
       <div className="relative z-[2000]">
         <BottomTimeline />
       </div>
+
+      {/* UX Overlays */}
+      <MissionGuide />
+      <OnboardingTour />
     </div>
   );
 }

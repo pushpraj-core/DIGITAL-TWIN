@@ -18,7 +18,7 @@ export const StrategyComparison = () => {
             <div className="grid grid-cols-3 gap-2 mt-2 text-sm">
               <div>
                 <div className="text-text-secondary text-xs">Distance</div>
-                <div className="text-text-primary">{Math.round(route.distance_m)} m</div>
+                <div className="text-text-primary">{Math.round(route.distance)} m</div>
               </div>
               <div>
                 <div className="text-text-secondary text-xs">Risk</div>

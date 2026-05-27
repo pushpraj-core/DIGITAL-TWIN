@@ -49,7 +49,7 @@ export const MissionReport = () => {
           </div>
           <div className="bg-bg-primary p-3 rounded">
             <p className="text-text-secondary mb-1">Total Distance</p>
-            <p className="text-text-primary font-bold">{Math.round(route.distance_m)} m</p>
+            <p className="text-text-primary font-bold">{Math.round(route.distance)} m</p>
           </div>
         </div>
 
@@ -58,7 +58,7 @@ export const MissionReport = () => {
           <ul className="list-disc pl-4 text-text-primary space-y-1">
             <li>Route maximizes concealment using dense vegetation.</li>
             <li>Low exposure to known Sniper position (Alpha).</li>
-            <li>Estimated traversal time: {Math.floor(route.estimated_time_s / 60)} minutes.</li>
+            <li>Estimated traversal time: {Math.floor(route.estimated_time / 60)} minutes.</li>
           </ul>
         </div>
       </div>

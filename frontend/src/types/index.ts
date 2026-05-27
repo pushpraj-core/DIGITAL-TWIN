@@ -38,11 +38,13 @@ export interface TerrainData {
   segments: TerrainSegment[];
   layers: string[];
   bounds: {
-    north: number;
-    south: number;
-    east: number;
-    west: number;
+    max_lat: number;
+    min_lat: number;
+    max_lng: number;
+    min_lng: number;
   };
+  analysis?: any;
+  weather?: any;
 }
 
 export type RiskLevel = 'low' | 'medium' | 'high';
@@ -57,10 +59,10 @@ export interface RiskCell {
 export interface RiskHeatmap {
   grid: RiskCell[][];
   bounds: {
-    north: number;
-    south: number;
-    east: number;
-    west: number;
+    max_lat: number;
+    min_lat: number;
+    max_lng: number;
+    min_lng: number;
   };
 }
 
@@ -87,7 +89,8 @@ export type ThreatType =
   | 'sniper'
   | 'tower'
   | 'blocked_road'
-  | 'danger_zone';
+  | 'danger_zone'
+  | string;
 
 export interface Threat {
   id: string;
@@ -101,6 +104,7 @@ export interface VisibilityResult {
   visible_zones: LatLng[][];
   hidden_zones: LatLng[][];
   los_lines: { from: LatLng; to: LatLng; visible: boolean }[];
+  coverage_pct?: number;
 }
 
 export interface MissionEvent {

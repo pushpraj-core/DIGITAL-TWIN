@@ -3,12 +3,31 @@ import api from '../../services/api';
 
 import { useMapStore } from '../../stores/mapStore';
 import { useMissionStore } from '../../stores/missionStore';
+import { useUIStore } from '../../stores/uiStore';
+import { Map, Shield, Crosshair, Route, Eye } from 'lucide-react';
+
+const EmptyState = ({ icon, title, description, actionLabel, onAction }: any) => (
+  <div className="border border-dashed border-slate-700/50 rounded-lg p-6 text-center bg-bg-card/50 flex flex-col items-center">
+    <div className="text-slate-500 mb-3">{icon}</div>
+    <h3 className="text-slate-300 font-bold mb-2">{title}</h3>
+    <p className="text-slate-500 text-xs mb-4">{description}</p>
+    {actionLabel && (
+      <button 
+        onClick={onAction}
+        className="px-4 py-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded hover:bg-cyan-500/20 text-xs font-bold transition-colors"
+      >
+        {actionLabel}
+      </button>
+    )}
+  </div>
+);
 
 export const UploadPanel = () => {
   const bounds = useMapStore((s) => s.bounds);
   const autoSync = useMapStore((s) => s.autoSync);
   const setAutoSync = useMapStore((s) => s.setAutoSync);
-  const [isFetching, setIsFetching] = React.useState(false);
+  const isFetching = useMissionStore((s) => s.isFetchingTerrain);
+  const setIsFetching = useMissionStore((s) => s.setIsFetchingTerrain);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   
   const setTerrainData = useMissionStore((s) => s.setTerrainData);
@@ -33,7 +52,7 @@ export const UploadPanel = () => {
   return (
     <div className="p-4 text-text-primary">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold glow-text text-accent-cyan">Live Area Selection</h2>
+        <h2 className="text-xl font-bold glow-text text-accent-cyan">Environment Overview</h2>
       </div>
 
       <div className="flex items-center justify-between p-3 mb-4 bg-bg-card border border-accent-cyan/30 rounded">
@@ -50,28 +69,38 @@ export const UploadPanel = () => {
       </div>
       
       {!terrainData ? (
-        <div className="border-2 border-dashed border-accent-cyan/50 rounded-lg p-6 text-center bg-bg-card/50">
-          <p className="text-text-secondary mb-4 text-sm">Pan and zoom the map to your target area, then fetch live satellite, elevation, and weather data.</p>
-          <button 
-            onClick={fetchLiveArea}
-            disabled={!bounds || isFetching}
-            className={`px-4 py-2 w-full rounded transition-colors font-bold ${isFetching || !bounds ? 'bg-bg-secondary text-text-secondary cursor-not-allowed' : 'bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 hover:bg-accent-cyan/30'}`}
-          >
-            {isFetching ? 'Downloading Satellite Data...' : 'Fetch Live Area'}
-          </button>
-          
-          {errorMsg && (
-            <div className="mt-4 p-2 bg-accent-red/20 border border-accent-red/50 text-accent-red text-xs rounded">
-              {errorMsg}
-            </div>
-          )}
-        </div>
+        <EmptyState 
+          icon={<Map className="w-8 h-8" />}
+          title="Awaiting Area"
+          description="Click anywhere on the map to define your target area and fetch live satellite, elevation, and intelligence data."
+          actionLabel={isFetching ? 'Downloading Area...' : 'Fetch Area Now'}
+          onAction={fetchLiveArea}
+        />
       ) : (
         <div className="border border-accent-green/30 rounded-lg p-4 bg-accent-green/10 mb-4">
           <div className="text-accent-green font-bold mb-2 flex items-center">
             <span className="mr-2">✓</span> Area Data Active
           </div>
-          <p className="text-xs text-text-secondary mb-4">Satellite imagery, elevation, and weather models are loaded.</p>
+          <p className="text-xs text-text-secondary mb-3">Satellite imagery, elevation, and weather models are loaded.</p>
+          
+          {terrainData.segments && terrainData.segments.length > 0 && (
+            <div className="mb-4 bg-bg-card/50 p-2 rounded border border-slate-700">
+              <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-bold">Terrain Composition</div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(
+                  terrainData.segments.reduce((acc, seg) => {
+                    acc[seg.type] = (acc[seg.type] || 0) + 1;
+                    return acc;
+                  }, {} as Record<string, number>)
+                ).map(([type, count]) => (
+                  <div key={type} className="text-xs px-2 py-1 bg-slate-800 rounded text-slate-300">
+                    <span className="capitalize">{type}</span>: <span className="text-accent-cyan font-mono">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button 
             onClick={() => clearAll()}
             className="w-full py-2 bg-accent-red/20 text-accent-red border border-accent-red/30 rounded hover:bg-accent-red/30 text-sm font-bold"
@@ -177,19 +206,41 @@ export const PathPlannerPanel = () => {
     setNoRouteFound(false);
   };
 
+  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
+
   return (
     <div className="p-4 text-text-primary">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-cyan">Movement Planner</h2>
+      <h2 className="text-xl font-bold mb-4 glow-text text-cyan-400">Movement Planner</h2>
       
       {!terrainData && (
-        <div className="mb-4 p-3 bg-accent-red/10 border border-accent-red/30 rounded text-accent-red text-sm">
-          Please fetch Live Area first before planning routes.
-        </div>
+        <EmptyState 
+          icon={<Map className="w-8 h-8" />}
+          title="Terrain Required"
+          description="Please fetch a Live Area first before planning routes."
+          actionLabel="Go to Upload Panel"
+          onAction={() => setActiveRightTab('upload')}
+        />
       )}
       
       {terrainData && (!startPoint || !endPoint) && (
-        <div className="mb-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded text-accent-amber text-sm">
-          Please click on the map to place both a Start (S) and End (E) point.
+        <div className="border border-dashed border-slate-700/50 rounded-lg p-6 text-center bg-bg-card/50 flex flex-col items-center">
+          <Route className="w-8 h-8 text-slate-500 mb-3" />
+          <h3 className="text-slate-300 font-bold mb-2">Place Waypoints</h3>
+          <p className="text-slate-500 text-xs mb-4">Click the buttons below, then click on the map to set your points.</p>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => useUIStore.getState().setClickMode('start')}
+              className={`px-4 py-2 text-xs font-bold rounded transition-colors ${!startPoint ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-bg-secondary text-text-secondary'}`}
+            >
+              {startPoint ? 'Start Set ✓' : 'Set Start Point'}
+            </button>
+            <button 
+              onClick={() => useUIStore.getState().setClickMode('end')}
+              className={`px-4 py-2 text-xs font-bold rounded transition-colors ${!endPoint ? 'bg-red-500/20 text-red-400 border border-red-500/50' : 'bg-bg-secondary text-text-secondary'}`}
+            >
+              {endPoint ? 'End Set ✓' : 'Set End Point'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -240,14 +291,20 @@ export const ObservationPanel = () => {
   const visibility = useMissionStore((s) => s.visibility);
   const terrainData = useMissionStore((s) => s.terrainData);
 
+  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
+
   return (
     <div className="p-4 text-text-primary">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-cyan">Vision Mode</h2>
+      <h2 className="text-xl font-bold mb-4 glow-text text-cyan-400">Vision Mode</h2>
       
       {!terrainData ? (
-        <div className="mb-4 p-3 bg-accent-red/10 border border-accent-red/30 rounded text-accent-red text-sm">
-          Please fetch Live Area first.
-        </div>
+        <EmptyState 
+          icon={<Map className="w-8 h-8" />}
+          title="Terrain Required"
+          description="Please fetch a Live Area first."
+          actionLabel="Go to Upload Panel"
+          onAction={() => setActiveRightTab('upload')}
+        />
       ) : (
         <>
           <p className="text-text-secondary text-sm mb-4">Click anywhere on the map to instantly reveal hidden terrain and direct lines of sight.</p>
@@ -316,12 +373,24 @@ export const ThreatPanel = () => {
     }
   };
 
+  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
+  const terrainData = useMissionStore((s) => s.terrainData);
+
   return (
     <div className="p-4 text-text-primary flex flex-col h-full overflow-y-auto">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-red">Threat Injection</h2>
-      <p className="text-text-secondary text-sm mb-4">Select a threat type and click on the map to inject it into the simulation environment.</p>
+      <h2 className="text-xl font-bold mb-4 glow-text text-red-400">Threat Injection</h2>
+      <p className="text-slate-400 text-sm mb-4">Select a threat type and click on the map to inject it into the simulation environment.</p>
       
-      <div className="grid grid-cols-2 gap-3 mt-4">
+      {!terrainData ? (
+        <EmptyState 
+          icon={<Map className="w-8 h-8" />}
+          title="Terrain Required"
+          description="Please fetch a Live Area first to place threats."
+          actionLabel="Go to Upload Panel"
+          onAction={() => setActiveRightTab('upload')}
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 mt-4">
         {threats.map(t => (
           <button 
             key={t.id}
@@ -331,7 +400,8 @@ export const ThreatPanel = () => {
             {t.label}
           </button>
         ))}
-      </div>
+        </div>
+      )}
 
       {activeThreat && (
         <div className="mt-6 p-4 bg-accent-red/10 border border-accent-red/30 rounded flex justify-between items-center">
@@ -361,6 +431,16 @@ export const ThreatPanel = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+      
+      {terrainData && threatsList.length === 0 && !activeThreat && (
+        <div className="mt-8 border-t border-slate-700/50 pt-6">
+          <EmptyState 
+            icon={<Shield className="w-6 h-6" />}
+            title="No Threats Found"
+            description="Add enemy positions above to simulate hostile terrain."
+          />
         </div>
       )}
     </div>

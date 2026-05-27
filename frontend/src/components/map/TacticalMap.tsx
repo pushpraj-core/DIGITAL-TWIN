@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, useMapEvents, Marker, Popup, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import api from '../../services/api';
 import { useMapStore } from '../../stores/mapStore';
@@ -8,6 +8,7 @@ import { useMissionStore } from '../../stores/missionStore';
 import HeatmapOverlay from './HeatmapOverlay';
 import PathOverlay from './PathOverlay';
 import ThreatMarkers from './ThreatMarkers';
+import TerrainOverlay from './TerrainOverlay';
 
 // Custom start marker icon
 const startIcon = L.divIcon({
@@ -26,15 +27,16 @@ const endIcon = L.divIcon({
 });
 
 function MapEventHandler() {
-  const setMousePosition = useMapStore((s) => s.setMousePosition);
-  const setStartPoint = useMapStore((s) => s.setStartPoint);
-  const setEndPoint = useMapStore((s) => s.setEndPoint);
-  const startPoint = useMapStore((s) => s.startPoint);
+  const map = useMap();
   const clickMode = useUIStore((s) => s.clickMode);
   const setClickMode = useUIStore((s) => s.setClickMode);
-  const activeThreatType = useUIStore((s) => s.activeThreatType);
-  const addThreat = useMissionStore((s) => s.addThreat);
+  const startPoint = useMapStore((s) => s.startPoint);
+  const setStartPoint = useMapStore((s) => s.setStartPoint);
+  const setEndPoint = useMapStore((s) => s.setEndPoint);
+  const setMousePosition = useMapStore((s) => s.setMousePosition);
   const setBounds = useMapStore((s) => s.setBounds);
+  const addThreat = useMissionStore((s) => s.addThreat);
+  const activeThreatType = useUIStore((s) => s.activeThreatType);
 
   const handleClick = useCallback(
     (e: L.LeafletMouseEvent) => {
@@ -82,22 +84,42 @@ function MapEventHandler() {
           runVisibility();
           setClickMode('none');
           break;
+        case 'area': {
+          // Calculate a fixed 2km x 2km bounding box around the click
+          const offset = 0.015; // Roughly 1.5km
+          const clickBounds = {
+            min_lat: point.lat - offset,
+            max_lat: point.lat + offset,
+            min_lng: point.lng - offset,
+            max_lng: point.lng + offset,
+          };
+          
+          useMapStore.getState().setAutoSync(false); // Disable auto-sync so it doesn't overwrite
+          useMapStore.getState().setBounds(clickBounds);
+          useMissionStore.getState().setIsFetchingTerrain(true);
+          
+          api.post('/terrain/fetch_live', { bounds: clickBounds })
+            .then((response) => {
+              useMissionStore.getState().setTerrainData(response.data);
+            })
+            .catch((err) => console.error("Click fetch failed:", err))
+            .finally(() => {
+              useMissionStore.getState().setIsFetchingTerrain(false);
+            });
+
+          map.panTo(point, { animate: true, duration: 1.0 });
+          break;
+        }
         default:
-          // Auto: first click = start, second = end
-          if (!startPoint) {
-            setStartPoint(point);
-          } else {
-            setEndPoint(point);
-          }
           break;
       }
     },
-    [clickMode, startPoint, setStartPoint, setEndPoint, setClickMode, addThreat, activeThreatType]
+    [clickMode, startPoint, setStartPoint, setEndPoint, setClickMode, addThreat, activeThreatType, map]
   );
 
   const throttleTimeout = useRef<number | null>(null);
 
-  const map = useMapEvents({
+  useMapEvents({
     mousemove: (e) => {
       if (throttleTimeout.current) return;
       throttleTimeout.current = window.setTimeout(() => {
@@ -107,23 +129,26 @@ function MapEventHandler() {
     },
     click: handleClick,
     moveend: () => {
-      const b = map.getBounds();
-      const newBounds = {
-        min_lat: b.getSouth(),
-        max_lat: b.getNorth(),
-        min_lng: b.getWest(),
-        max_lng: b.getEast(),
-      };
-      setBounds(newBounds);
-
       // Auto-fetch Live Area if autoSync is enabled
       const autoSync = useMapStore.getState().autoSync;
       if (autoSync) {
+        const b = map.getBounds();
+        const newBounds = {
+          min_lat: b.getSouth(),
+          max_lat: b.getNorth(),
+          min_lng: b.getWest(),
+          max_lng: b.getEast(),
+        };
+        setBounds(newBounds);
+        useMissionStore.getState().setIsFetchingTerrain(true);
         api.post('/terrain/fetch_live', { bounds: newBounds })
           .then((response) => {
             useMissionStore.getState().setTerrainData(response.data);
           })
-          .catch((err) => console.error("Auto-sync fetch failed:", err));
+          .catch((err) => console.error("Auto-sync fetch failed:", err))
+          .finally(() => {
+            useMissionStore.getState().setIsFetchingTerrain(false);
+          });
       }
     }
   });
@@ -161,6 +186,7 @@ export default function TacticalMap() {
   const layers = useMapStore((s) => s.layers);
   const visibility = useMissionStore((s) => s.visibility);
 
+
   const isLayerVisible = (id: string) => layers.find((l) => l.id === id)?.visible ?? false;
 
   return (
@@ -172,10 +198,17 @@ export default function TacticalMap() {
       attributionControl={true}
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        maxZoom={19}
+      />
+      {/* City labels, roads, borders overlay */}
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
         subdomains="abcd"
         maxZoom={20}
+        pane="overlayPane"
       />
 
       <MapEventHandler />
@@ -227,6 +260,7 @@ export default function TacticalMap() {
       )}
 
       {/* Conditional overlays */}
+      {isLayerVisible('terrain') && <TerrainOverlay />}
       {isLayerVisible('heatmap') && <HeatmapOverlay />}
       {isLayerVisible('routes') && <PathOverlay />}
       {isLayerVisible('threats') && <ThreatMarkers />}
@@ -236,13 +270,13 @@ export default function TacticalMap() {
         <>
           {visibility.visible_zones.length > 0 && (
             <Polygon 
-              positions={visibility.visible_zones as [number, number][]} 
+              positions={visibility.visible_zones as any} 
               pathOptions={{ color: '#00f0ff', fillColor: '#00f0ff', fillOpacity: 0.3, weight: 1 }} 
             />
           )}
           {visibility.hidden_zones.length > 0 && (
             <Polygon 
-              positions={visibility.hidden_zones as [number, number][]} 
+              positions={visibility.hidden_zones as any} 
               pathOptions={{ color: '#333333', fillColor: '#000000', fillOpacity: 0.6, weight: 1 }} 
             />
           )}

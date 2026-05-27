@@ -6,9 +6,11 @@ import {
   WifiOff,
   Activity,
   MapPin,
+  HelpCircle,
 } from 'lucide-react';
 import { useMapStore } from '../../stores/mapStore';
 import { useMissionStore } from '../../stores/missionStore';
+import { useUIStore } from '../../stores/uiStore';
 import { formatCoordinates } from '../../utils/format';
 
 export default function TopBar() {
@@ -18,6 +20,11 @@ export default function TopBar() {
   const coordinateFormat = useMapStore((s) => s.coordinateFormat);
   const isAnalyzing = useMissionStore((s) => s.isAnalyzing);
   const isPlanning = useMissionStore((s) => s.isPlanning);
+  const isFetchingTerrain = useMissionStore((s) => s.isFetchingTerrain);
+  
+  const missionStage = useUIStore((s) => s.missionStage);
+  const setShowOnboarding = useUIStore((s) => s.setShowOnboarding);
+  const setOnboardingStep = useUIStore((s) => s.setOnboardingStep);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -36,7 +43,9 @@ export default function TopBar() {
   }, []);
 
   const systemStatus = online ? 'ONLINE' : 'OFFLINE';
-  const analysisStatus = isAnalyzing
+  const analysisStatus = isFetchingTerrain
+    ? 'DOWNLOADING'
+    : isAnalyzing
     ? 'ANALYZING'
     : isPlanning
     ? 'PLANNING'
@@ -62,7 +71,7 @@ export default function TopBar() {
       </div>
 
       {/* Center: Status indicators */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 flex-1 justify-center">
         {/* System status */}
         <div className="flex items-center gap-2">
           <div
@@ -79,12 +88,12 @@ export default function TopBar() {
         <div className="flex items-center gap-2">
           <Activity
             className={`w-3 h-3 ${
-              isAnalyzing || isPlanning ? 'text-amber-400 animate-pulse' : 'text-slate-600'
+              isAnalyzing || isPlanning || isFetchingTerrain ? 'text-amber-400 animate-pulse' : 'text-slate-600'
             }`}
           />
           <span
             className={`text-[10px] font-mono uppercase tracking-wider ${
-              isAnalyzing || isPlanning ? 'text-amber-400' : 'text-slate-500'
+              isAnalyzing || isPlanning || isFetchingTerrain ? 'text-amber-400' : 'text-slate-500'
             }`}
           >
             {analysisStatus}
@@ -118,6 +127,16 @@ export default function TopBar() {
             {online ? 'CONNECTED' : 'DISCONNECTED'}
           </span>
         </div>
+
+        <div className="h-4 w-px bg-slate-700" />
+        
+        <button 
+          onClick={() => { setOnboardingStep(0); setShowOnboarding(true); }}
+          className="flex items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors"
+          title="Show Tutorial"
+        >
+          <HelpCircle className="w-4 h-4" />
+        </button>
 
         <div className="h-4 w-px bg-slate-700" />
 

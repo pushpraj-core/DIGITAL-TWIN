@@ -150,6 +150,26 @@ body {
   }
 }
 
+/* ── Pulse Border Animation ─────────────────────────────────── */
+.pulse-border {
+  animation: pulseBorder 2s infinite;
+}
+
+@keyframes pulseBorder {
+  0% { border-color: rgba(0, 240, 255, 0.2); }
+  50% { border-color: rgba(0, 240, 255, 0.8); box-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
+  100% { border-color: rgba(0, 240, 255, 0.2); }
+}
+
+/* ── Animated Path ──────────────────────────────────────────── */
+.animated-path {
+  stroke-dasharray: 10 10;
+  animation: march 2s linear infinite;
+}
+@keyframes march {
+  to { stroke-dashoffset: -20; }
+}
+
 /* ── Tactical Grid Pattern ──────────────────────────────────── */
 .tactical-grid {
   background-image:

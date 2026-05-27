@@ -10,23 +10,28 @@ import {
 import { useMap } from 'react-leaflet';
 import { useMapStore } from '../../stores/mapStore';
 import { formatCoordinates } from '../../utils/format';
+import Tooltip from '../common/Tooltip';
 
 function ZoomControl() {
   const map = useMap();
   return (
     <>
-      <button
-        onClick={() => map.zoomIn()}
-        className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
-      >
-        <Plus className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => map.zoomOut()}
-        className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
-      >
-        <Minus className="w-4 h-4" />
-      </button>
+      <Tooltip title="Zoom In" position="left" delay={500}>
+        <button
+          onClick={() => map.zoomIn()}
+          className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </Tooltip>
+      <Tooltip title="Zoom Out" position="left" delay={500}>
+        <button
+          onClick={() => map.zoomOut()}
+          className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+      </Tooltip>
     </>
   );
 }
@@ -35,13 +40,14 @@ function RecenterButton() {
   const map = useMap();
   const center = useMapStore((s) => s.center);
   return (
-    <button
-      onClick={() => map.setView([center.lat, center.lng], 13)}
-      className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
-      title="Recenter"
-    >
-      <Locate className="w-4 h-4" />
-    </button>
+    <Tooltip title="Recenter Map" description="Center on the active mission area." position="left" delay={500}>
+      <button
+        onClick={() => map.setView([center.lat, center.lng], 13)}
+        className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+      >
+        <Locate className="w-4 h-4" />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -51,17 +57,18 @@ function GridToggle() {
   const gridVisible = layers.find((l) => l.id === 'grid')?.visible ?? false;
 
   return (
-    <button
-      onClick={() => toggleLayer('grid')}
-      className={`w-8 h-8 rounded-md flex items-center justify-center border transition-all cursor-pointer ${
-        gridVisible
-          ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400'
-          : 'bg-slate-800/80 border-cyan-500/20 text-slate-400 hover:text-cyan-400'
-      }`}
-      title="Toggle Grid"
-    >
-      <Grid3x3 className="w-4 h-4" />
-    </button>
+    <Tooltip title="Toggle Grid" description="Show/hide tactical map grid overlays." position="left" delay={500}>
+      <button
+        onClick={() => toggleLayer('grid')}
+        className={`w-8 h-8 rounded-md flex items-center justify-center border transition-all cursor-pointer ${
+          gridVisible
+            ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400'
+            : 'bg-slate-800/80 border-cyan-500/20 text-slate-400 hover:text-cyan-400'
+        }`}
+      >
+        <Grid3x3 className="w-4 h-4" />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -70,15 +77,16 @@ function CoordFormatToggle() {
   const setCoordinateFormat = useMapStore((s) => s.setCoordinateFormat);
 
   return (
-    <button
-      onClick={() =>
-        setCoordinateFormat(coordinateFormat === 'decimal' ? 'dms' : 'decimal')
-      }
-      className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
-      title={`Format: ${coordinateFormat.toUpperCase()}`}
-    >
-      <Navigation className="w-4 h-4" />
-    </button>
+    <Tooltip title={`Format: ${coordinateFormat.toUpperCase()}`} description="Switch between Decimal and DMS formats." position="left" delay={500}>
+      <button
+        onClick={() =>
+          setCoordinateFormat(coordinateFormat === 'decimal' ? 'dms' : 'decimal')
+        }
+        className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+      >
+        <Navigation className="w-4 h-4" />
+      </button>
+    </Tooltip>
   );
 }
 

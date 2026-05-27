@@ -40,6 +40,7 @@ export default function PathOverlay() {
                 dashArray: isSelected ? undefined : '8 6',
                 lineCap: 'round',
                 lineJoin: 'round',
+                className: isSelected ? 'animated-path' : '',
               }}
             >
               <Tooltip

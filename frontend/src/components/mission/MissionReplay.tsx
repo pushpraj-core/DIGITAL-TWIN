@@ -54,7 +54,7 @@ export const MissionReplay = () => {
       </div>
       <div className="flex justify-between text-xs text-text-secondary mt-1">
         <span>Start</span>
-        <span>Est: {Math.floor(route.estimated_time_s / 60)} min</span>
+        <span>Est: {Math.floor(route.estimated_time / 60)} min</span>
       </div>
 
       <div className="mt-4 text-sm text-text-secondary">
