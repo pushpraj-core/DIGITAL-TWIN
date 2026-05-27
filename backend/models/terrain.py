@@ -47,3 +47,7 @@ class TerrainAnalysisResult(BaseModel):
         default_factory=dict,
         description="Bounding box: min_lat, max_lat, min_lng, max_lng",
     )
+    weather: dict[str, Any] | None = Field(
+        default=None,
+        description="Live weather data for the area"
+    )

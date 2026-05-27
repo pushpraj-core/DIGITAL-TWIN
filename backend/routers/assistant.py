@@ -5,11 +5,11 @@ router = APIRouter(prefix="/assistant", tags=["Assistant"])
 
 @router.post("/query", response_model=AIQueryResponse)
 async def query_assistant(req: AIQueryRequest):
-    return AIQueryResponse(
-        response="This is a mock AI response.",
-        actions=[],
-        suggestions=["Find safest route", "Compare routes"]
-    )
+    from engines.ai_assistant import AIAssistant
+    
+    # In a full app, we might instantiate this once or use dependency injection
+    assistant = AIAssistant()
+    return assistant.process_query(req)
 
 @router.get("/suggestions")
 async def get_suggestions():

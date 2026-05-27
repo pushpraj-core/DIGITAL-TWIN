@@ -18,6 +18,7 @@ interface UIState {
   replayProgress: number;
 
   clickMode: 'none' | 'start' | 'end' | 'threat' | 'observer';
+  activeThreatType: string | null;
 
   toggleLeftPanel: () => void;
   toggleRightPanel: () => void;
@@ -35,6 +36,7 @@ interface UIState {
   setIsReplaying: (val: boolean) => void;
   setReplayProgress: (progress: number) => void;
   setClickMode: (mode: 'none' | 'start' | 'end' | 'threat' | 'observer') => void;
+  setActiveThreatType: (type: string | null) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -55,6 +57,7 @@ export const useUIStore = create<UIState>((set) => ({
   replayProgress: 0,
 
   clickMode: 'none',
+  activeThreatType: null,
 
   toggleLeftPanel: () => set((s) => ({ leftPanelOpen: !s.leftPanelOpen })),
   toggleRightPanel: () => set((s) => ({ rightPanelOpen: !s.rightPanelOpen })),
@@ -72,4 +75,5 @@ export const useUIStore = create<UIState>((set) => ({
   setIsReplaying: (val) => set({ isReplaying: val }),
   setReplayProgress: (progress) => set({ replayProgress: progress }),
   setClickMode: (mode) => set({ clickMode: mode }),
+  setActiveThreatType: (type) => set({ activeThreatType: type }),
 }));

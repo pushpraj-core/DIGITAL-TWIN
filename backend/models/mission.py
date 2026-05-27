@@ -22,6 +22,7 @@ class RouteRequest(BaseModel):
         description="One of: stealth, fastest, safest, reconnaissance, extraction",
     )
     terrain_id: str = Field(..., description="ID of the analysed terrain")
+    threats: list[dict[str, Any]] = Field(default_factory=list, description="List of active threats")
 
 
 class RouteResult(BaseModel):
@@ -49,6 +50,7 @@ class RoutePlanResult(BaseModel):
 
 
 class VisibilityRequest(BaseModel):
+    terrain_id: str
     observer_lat: float
     observer_lng: float
     range_m: float = 500.0

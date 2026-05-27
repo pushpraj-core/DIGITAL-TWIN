@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup } from 'react-leaflet';
+import React, { useCallback, useRef, useEffect } from 'react';
+import { MapContainer, TileLayer, useMapEvents, Marker, Popup, Polygon } from 'react-leaflet';
 import L from 'leaflet';
+import api from '../../services/api';
 import { useMapStore } from '../../stores/mapStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useMissionStore } from '../../stores/missionStore';
@@ -31,7 +32,9 @@ function MapEventHandler() {
   const startPoint = useMapStore((s) => s.startPoint);
   const clickMode = useUIStore((s) => s.clickMode);
   const setClickMode = useUIStore((s) => s.setClickMode);
+  const activeThreatType = useUIStore((s) => s.activeThreatType);
   const addThreat = useMissionStore((s) => s.addThreat);
+  const setBounds = useMapStore((s) => s.setBounds);
 
   const handleClick = useCallback(
     (e: L.LeafletMouseEvent) => {
@@ -48,15 +51,35 @@ function MapEventHandler() {
           setClickMode('none');
           break;
         case 'threat':
-          addThreat({
-            id: `threat-${Date.now()}`,
-            type: 'danger_zone',
-            position: point,
-            radius: 200,
-            active: true,
-          });
+          if (activeThreatType) {
+            addThreat({
+              id: `threat-${Date.now()}`,
+              type: activeThreatType,
+              position: point,
+              radius: 200,
+              active: true,
+            });
+          }
           break;
         case 'observer':
+          const runVisibility = async () => {
+            const terrainData = useMissionStore.getState().terrainData;
+            if (!terrainData) return;
+            try {
+              const res = await api.post('/observation/visibility', {
+                terrain_id: terrainData.analysis.id,
+                observer_lat: point.lat,
+                observer_lng: point.lng,
+                range_m: 500,
+                angle_deg: 90,
+                direction_deg: 0 // In a full app, this would be draggable
+              });
+              useMissionStore.getState().setVisibility(res.data);
+            } catch (e) {
+              console.error(e);
+            }
+          };
+          runVisibility();
           setClickMode('none');
           break;
         default:
@@ -69,15 +92,50 @@ function MapEventHandler() {
           break;
       }
     },
-    [clickMode, startPoint, setStartPoint, setEndPoint, setClickMode, addThreat]
+    [clickMode, startPoint, setStartPoint, setEndPoint, setClickMode, addThreat, activeThreatType]
   );
 
-  useMapEvents({
+  const throttleTimeout = useRef<number | null>(null);
+
+  const map = useMapEvents({
     mousemove: (e) => {
-      setMousePosition({ lat: e.latlng.lat, lng: e.latlng.lng });
+      if (throttleTimeout.current) return;
+      throttleTimeout.current = window.setTimeout(() => {
+        setMousePosition({ lat: e.latlng.lat, lng: e.latlng.lng });
+        throttleTimeout.current = null;
+      }, 50); // 50ms throttle (~20fps update rate is fine for coords)
     },
     click: handleClick,
+    moveend: () => {
+      const b = map.getBounds();
+      setBounds({
+        min_lat: b.getSouth(),
+        max_lat: b.getNorth(),
+        min_lng: b.getWest(),
+        max_lng: b.getEast(),
+      });
+    }
   });
+
+  // Initial bounds set
+  React.useEffect(() => {
+    const b = map.getBounds();
+    setBounds({
+      min_lat: b.getSouth(),
+      max_lat: b.getNorth(),
+      min_lng: b.getWest(),
+      max_lng: b.getEast(),
+    });
+  }, [map, setBounds]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (throttleTimeout.current) {
+        clearTimeout(throttleTimeout.current);
+      }
+    };
+  }, []);
 
   return null;
 }
@@ -88,6 +146,7 @@ export default function TacticalMap() {
   const startPoint = useMapStore((s) => s.startPoint);
   const endPoint = useMapStore((s) => s.endPoint);
   const layers = useMapStore((s) => s.layers);
+  const visibility = useMissionStore((s) => s.visibility);
 
   const isLayerVisible = (id: string) => layers.find((l) => l.id === id)?.visible ?? false;
 
@@ -144,6 +203,24 @@ export default function TacticalMap() {
       {isLayerVisible('heatmap') && <HeatmapOverlay />}
       {isLayerVisible('routes') && <PathOverlay />}
       {isLayerVisible('threats') && <ThreatMarkers />}
+
+      {/* Visibility Polygon Overlay */}
+      {isLayerVisible('visibility') && visibility && (
+        <>
+          {visibility.visible_zones.length > 0 && (
+            <Polygon 
+              positions={visibility.visible_zones as [number, number][]} 
+              pathOptions={{ color: '#00f0ff', fillColor: '#00f0ff', fillOpacity: 0.3, weight: 1 }} 
+            />
+          )}
+          {visibility.hidden_zones.length > 0 && (
+            <Polygon 
+              positions={visibility.hidden_zones as [number, number][]} 
+              pathOptions={{ color: '#333333', fillColor: '#000000', fillOpacity: 0.6, weight: 1 }} 
+            />
+          )}
+        </>
+      )}
     </MapContainer>
   );
 }

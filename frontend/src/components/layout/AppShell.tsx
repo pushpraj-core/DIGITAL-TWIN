@@ -1,19 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import api from '../../services/api';
+import { useMissionStore } from '../../stores/missionStore';
 import TopBar from './TopBar';
 import Sidebar from './Sidebar';
 import BottomTimeline from './BottomTimeline';
 import TacticalMap from '../map/TacticalMap';
 import MapControls from '../map/MapControls';
 import LayerPanel from '../map/LayerPanel';
-import UploadPanel from '../panels/UploadPanel';
-import TerrainPanel from '../panels/TerrainPanel';
-import RiskPanel from '../panels/RiskPanel';
-import PathPlannerPanel from '../panels/PathPlannerPanel';
-import ObservationPanel from '../panels/ObservationPanel';
-import ThreatPanel from '../panels/ThreatPanel';
-import WhatIfPanel from '../panels/WhatIfPanel';
-import AIAssistantPanel from '../panels/AIAssistantPanel';
+import {
+  UploadPanel,
+  TerrainPanel,
+  RiskPanel,
+  PathPlannerPanel,
+  ObservationPanel,
+  ThreatPanel,
+  WhatIfPanel,
+  AIAssistantPanel,
+} from '../panels';
 import { useUIStore } from '../../stores/uiStore';
 
 const panelMap: Record<string, React.ComponentType> = {
@@ -27,6 +31,49 @@ const panelMap: Record<string, React.ComponentType> = {
   assistant: AIAssistantPanel,
 };
 
+function RiskDataSync() {
+  const terrainData = useMissionStore((s) => s.terrainData);
+  const threats = useMissionStore((s) => s.threats);
+  const setRiskHeatmap = useMissionStore((s) => s.setRiskHeatmap);
+  const setRoutes = useMissionStore((s) => s.setRoutes); // clear routes if environment changes
+
+  useEffect(() => {
+    if (!terrainData) {
+      setRiskHeatmap(null);
+      return;
+    }
+    
+    let isMounted = true;
+    const fetchRisk = async () => {
+      try {
+        const response = await api.post('/risk/compute', {
+          terrain_id: terrainData.analysis.id,
+          include_threats: true,
+          threats: threats
+        });
+        if (isMounted) {
+          setRiskHeatmap(response.data);
+          setRoutes([]); // Clear old routes that are now invalid
+        }
+      } catch (err) {
+        console.error("Failed to compute risk heatmap", err);
+      }
+    };
+    
+    // Add a slight debounce to prevent spamming the backend if many threats are placed
+    const timer = setTimeout(() => {
+      fetchRisk();
+    }, 300);
+    
+    return () => { 
+      isMounted = false; 
+      clearTimeout(timer);
+    };
+  }, [terrainData, threats, setRiskHeatmap, setRoutes]);
+
+  return null;
+}
+
 export default function AppShell() {
   const rightPanelOpen = useUIStore((s) => s.rightPanelOpen);
   const activeRightTab = useUIStore((s) => s.activeRightTab);
@@ -35,13 +82,18 @@ export default function AppShell() {
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden tactical-grid">
+      <RiskDataSync />
       {/* Top Bar */}
-      <TopBar />
+      <div className="relative z-[2000]">
+        <TopBar />
+      </div>
 
       {/* Main area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
-        <Sidebar />
+        <div className="relative z-[2000]">
+          <Sidebar />
+        </div>
 
         {/* Center: Map */}
         <div className="flex-1 relative overflow-hidden">
@@ -59,7 +111,7 @@ export default function AppShell() {
               animate={{ width: 380, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="border-l border-cyan-500/10 overflow-hidden flex-shrink-0"
+              className="border-l border-cyan-500/10 overflow-hidden flex-shrink-0 relative z-[2000]"
               style={{ background: 'rgba(10, 14, 26, 0.95)' }}
             >
               <div className="w-[380px] h-full overflow-y-auto overflow-x-hidden">
@@ -71,7 +123,9 @@ export default function AppShell() {
       </div>
 
       {/* Bottom Timeline */}
-      <BottomTimeline />
+      <div className="relative z-[2000]">
+        <BottomTimeline />
+      </div>
     </div>
   );
 }

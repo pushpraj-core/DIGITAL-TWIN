@@ -4,7 +4,7 @@ import { useMissionStore } from '../../stores/missionStore';
 import { useMapStore } from '../../stores/mapStore';
 import { riskToHeatColor } from '../../utils/colors';
 
-export default function HeatmapOverlay() {
+const HeatmapOverlay = React.memo(() => {
   const riskHeatmap = useMissionStore((s) => s.riskHeatmap);
   const layers = useMapStore((s) => s.layers);
   const heatmapLayer = layers.find((l) => l.id === 'heatmap');
@@ -46,4 +46,6 @@ export default function HeatmapOverlay() {
       )}
     </>
   );
-}
+});
+
+export default HeatmapOverlay;

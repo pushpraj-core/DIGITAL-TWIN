@@ -2,22 +2,33 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any
 
-from models.terrain import RiskHeatmapResult
-
+from models.threat import RiskHeatmapResult
+from engines.risk_simulation import RiskSimulationEngine
 router = APIRouter(prefix="/risk", tags=["Risk"])
 
 class ComputeRiskRequest(BaseModel):
     terrain_id: str
     include_threats: bool = True
+    threats: List[Dict[str, Any]] = []
 
 @router.post("/compute", response_model=RiskHeatmapResult)
 async def compute_risk_heatmap(req: ComputeRiskRequest):
-    # Mock response
-    return RiskHeatmapResult(
-        grid=[[{"x": 0, "y": 0, "risk_score": 0.2, "risk_level": "low"}]],
-        bounds={"north": 34.06, "south": 34.04, "east": -118.23, "west": -118.25},
-        stats={"avg_risk": 0.4, "max_risk": 0.9, "high_risk_pct": 0.1}
-    )
+    from routers.terrain import STORE, terrain_engine
+    terrain_data = STORE.get(req.terrain_id)
+    if not terrain_data or "analysis" not in terrain_data:
+        raise HTTPException(status_code=404, detail="Terrain analysis not found")
+        
+    analysis = terrain_data["analysis"]
+    terrain_grid = terrain_engine.generate_terrain_grid(analysis)
+    elevation_grid = terrain_data.get("elevation_grid")
+    
+    risk_engine = RiskSimulationEngine()
+    
+    # Use threats from request payload
+    threats = req.threats if req.include_threats else []
+    
+    result = risk_engine.compute_risk_heatmap(terrain_grid, threats=threats, elevation_grid=elevation_grid, bounds=analysis.bounds)
+    return result
 
 class ChokepointRequest(BaseModel):
     terrain_id: str

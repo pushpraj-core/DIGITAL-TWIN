@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from models.mission import VisibilityRequest, VisibilityResult
 
@@ -16,11 +16,29 @@ async def check_los(req: LOSRequest):
 
 @router.post("/visibility", response_model=VisibilityResult)
 async def compute_visibility(req: VisibilityRequest):
-    return VisibilityResult(
-        visible_zones=[],
-        hidden_zones=[],
-        coverage_pct=0.5
+    from routers.terrain import STORE, terrain_engine
+    from engines.observation_analysis import ObservationAnalysisEngine
+    import numpy as np
+
+    terrain_data = STORE.get(req.terrain_id)
+    if not terrain_data or "analysis" not in terrain_data:
+        raise HTTPException(status_code=404, detail="Terrain analysis not found")
+        
+    analysis = terrain_data["analysis"]
+    terrain_grid = terrain_engine.generate_terrain_grid(analysis)
+    elevation_grid = terrain_data.get("elevation_grid")
+
+    if elevation_grid is None:
+        elevation_grid = np.zeros(terrain_grid.shape, dtype=np.float32)
+
+    obs_engine = ObservationAnalysisEngine()
+    result = obs_engine.compute_visibility_cone(
+        request=req,
+        elevation_grid=elevation_grid,
+        terrain_grid=terrain_grid,
+        bounds=analysis.bounds
     )
+    return result
 
 class VantagePointRequest(BaseModel):
     terrain_id: str

@@ -3,16 +3,24 @@ import uuid
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import List, Dict, Any
 
+from pydantic import BaseModel
 from models.terrain import TerrainUploadResponse, TerrainAnalysisResult
-# from engines.terrain_intelligence import TerrainIntelligenceEngine # assuming instantiated globally or DI
+from engines.terrain_intelligence import TerrainIntelligenceEngine # assuming instantiated globally or DI
+
+class LiveTerrainRequest(BaseModel):
+    bounds: dict
 
 router = APIRouter(prefix="/terrain", tags=["Terrain"])
 
 # In a real app, this would be injected
-# terrain_engine = TerrainIntelligenceEngine()
+terrain_engine = TerrainIntelligenceEngine()
 
 # Mock storage for development
 STORE: Dict[str, Any] = {}
+CACHE: Dict[str, str] = {} # hash -> terrain_id
+
+def hash_bounds(bounds: dict) -> str:
+    return f"{bounds['min_lat']:.3f}_{bounds['max_lat']:.3f}_{bounds['min_lng']:.3f}_{bounds['max_lng']:.3f}"
 
 @router.post("/upload", response_model=TerrainUploadResponse)
 async def upload_terrain(file: UploadFile = File(...)):
@@ -39,6 +47,59 @@ async def upload_terrain(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload file: {str(e)}")
 
+@router.post("/fetch_live", response_model=TerrainAnalysisResult)
+async def fetch_live_terrain(req: LiveTerrainRequest):
+    lat_diff = abs(req.bounds.get("max_lat", 0) - req.bounds.get("min_lat", 0))
+    lng_diff = abs(req.bounds.get("max_lng", 0) - req.bounds.get("min_lng", 0))
+    area = lat_diff * lng_diff
+    
+    if area > 1.0:
+        raise HTTPException(
+            status_code=400, 
+            detail="Bounding box too large. Please zoom in to a specific tactical area (max ~100x100km)."
+        )
+        
+    b_hash = hash_bounds(req.bounds)
+    if b_hash in CACHE and CACHE[b_hash] in STORE:
+        return STORE[CACHE[b_hash]]["analysis"]
+
+    from engines.live_data import LiveDataEngine
+    import asyncio
+    
+    live_engine = LiveDataEngine()
+    
+    try:
+        # Fetch satellite image
+        filepath = await live_engine.fetch_satellite_image(req.bounds, zoom=16)
+        
+        # Fetch elevation and weather concurrently
+        elev_task = asyncio.create_task(live_engine.fetch_elevation_grid(req.bounds, grid_size=100))
+        center_lat = (req.bounds["min_lat"] + req.bounds["max_lat"]) / 2
+        center_lng = (req.bounds["min_lng"] + req.bounds["max_lng"]) / 2
+        weather_task = asyncio.create_task(live_engine.fetch_weather(center_lat, center_lng))
+        
+        elevation_grid, weather = await asyncio.gather(elev_task, weather_task)
+        
+        terrain_id = str(uuid.uuid4())
+        result = terrain_engine.analyze_image(filepath, analysis_id=terrain_id)
+        
+        # Override bounds with actual requested bounds
+        result.bounds = req.bounds
+        result.weather = weather
+        
+        STORE[terrain_id] = {
+            "filepath": filepath,
+            "status": "live",
+            "filename": f"live_{terrain_id}.jpg",
+            "analysis": result,
+            "elevation_grid": elevation_grid,
+            "weather": weather
+        }
+        CACHE[b_hash] = terrain_id
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Live fetch failed: {str(e)}")
+
 @router.post("/analyze/{terrain_id}", response_model=TerrainAnalysisResult)
 async def analyze_terrain(terrain_id: str):
     if terrain_id not in STORE:
@@ -47,15 +108,7 @@ async def analyze_terrain(terrain_id: str):
     filepath = STORE[terrain_id]["filepath"]
     
     try:
-        # result = terrain_engine.analyze_image(filepath)
-        # For now, returning a mock to unblock UI dev
-        result = TerrainAnalysisResult(
-            id=terrain_id,
-            segments=[],
-            layers={"safe": [], "exposed": [], "obstacle": []},
-            terrain_classes={"safe": 100, "exposed": 200, "urban": 50},
-            bounds={"north": 34.06, "south": 34.04, "east": -118.23, "west": -118.25}
-        )
+        result = terrain_engine.analyze_image(filepath, analysis_id=terrain_id)
         STORE[terrain_id]["analysis"] = result
         return result
     except Exception as e:
