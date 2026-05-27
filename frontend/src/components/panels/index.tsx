@@ -146,6 +146,13 @@ export const PathPlannerPanel = () => {
     }
   };
 
+  const clearPoints = () => {
+    useMapStore.getState().setStartPoint(null);
+    useMapStore.getState().setEndPoint(null);
+    setRoutes([]);
+    setNoRouteFound(false);
+  };
+
   return (
     <div className="p-4 text-text-primary">
       <h2 className="text-xl font-bold mb-4 glow-text text-accent-cyan">Movement Planner</h2>
@@ -160,6 +167,15 @@ export const PathPlannerPanel = () => {
         <div className="mb-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded text-accent-amber text-sm">
           Please click on the map to place both a Start (S) and End (E) point.
         </div>
+      )}
+
+      {(startPoint || endPoint) && (
+        <button 
+          onClick={clearPoints}
+          className="w-full py-2 mb-4 bg-accent-red/20 text-accent-red border border-accent-red/30 rounded hover:bg-accent-red/30 text-sm font-bold"
+        >
+          Clear Points
+        </button>
       )}
 
       <div className="space-y-4">
