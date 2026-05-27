@@ -1,0 +1,44 @@
+{
+  "model_name": "nvidia/segformer-b0-finetuned-ade-512-512",
+  "num_labels": 10,
+  "id2label": {
+    "0": "background",
+    "1": "building",
+    "2": "road",
+    "3": "water",
+    "4": "vegetation",
+    "5": "open_ground",
+    "6": "bridge",
+    "7": "obstacle",
+    "8": "hill",
+    "9": "urban"
+  },
+  "label2id": {
+    "background": 0,
+    "building": 1,
+    "road": 2,
+    "water": 3,
+    "vegetation": 4,
+    "open_ground": 5,
+    "bridge": 6,
+    "obstacle": 7,
+    "hill": 8,
+    "urban": 9
+  },
+  "image_size": 512,
+  "batch_size": 8,
+  "learning_rate": 6e-5,
+  "num_epochs": 50,
+  "terrain_class_mapping": {
+    "building": "urban",
+    "road": "exposed",
+    "water": "obstacle",
+    "vegetation": "forest",
+    "open_ground": "exposed",
+    "bridge": "safe",
+    "obstacle": "obstacle",
+    "hill": "high_ground",
+    "urban": "urban",
+    "background": "safe"
+  }
+}

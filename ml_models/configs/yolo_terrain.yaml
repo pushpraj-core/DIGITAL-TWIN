@@ -1,0 +1,43 @@
+# YOLOv8 Terrain Object Detection Configuration
+# Used for detecting tactical objects in satellite/drone imagery
+
+# Dataset configuration (for fine-tuning)
+path: ../data/terrain_dataset
+train: images/train
+val: images/val
+test: images/test
+
+# Classes for tactical terrain analysis
+names:
+  0: building
+  1: road
+  2: vehicle
+  3: bridge
+  4: water_body
+  5: vegetation_dense
+  6: vegetation_sparse
+  7: open_ground
+  8: obstacle
+  9: structure
+
+# Training parameters
+epochs: 100
+batch: 16
+imgsz: 640
+device: 0  # GPU index, use 'cpu' for CPU
+patience: 50
+save: true
+save_period: 10
+
+# Augmentation
+augment: true
+degrees: 15.0
+translate: 0.1
+scale: 0.5
+fliplr: 0.5
+flipud: 0.2
+mosaic: 1.0
+mixup: 0.1
+
+# Model
+model: yolov8n.pt  # nano for speed, yolov8m.pt for accuracy
