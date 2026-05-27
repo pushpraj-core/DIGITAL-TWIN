@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from routers import terrain, risk, pathfinding, observation, simulation, threats, whatif, assistant
-from config import settings
+import config as settings
 
 app = FastAPI(
     title="Tactical Digital Twin API",
@@ -15,17 +15,15 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS.split(","),
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Create upload directory on startup
-@app.on_event("startup")
-async def startup_event():
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    os.makedirs(settings.MODEL_DIR, exist_ok=True)
+# Create directories
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+os.makedirs(settings.MODEL_DIR, exist_ok=True)
 
 # Mount static files
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
