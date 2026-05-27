@@ -51,23 +51,109 @@ export const ObservationPanel = () => (
   </div>
 );
 
-export const ThreatPanel = () => (
-  <div className="p-4 text-text-primary">
-    <h2 className="text-xl font-bold mb-4 glow-text text-accent-red">Threat Injection</h2>
-    <p className="text-text-secondary">Select threat type to place on map.</p>
-    <div className="grid grid-cols-2 gap-2 mt-4">
-      <button className="p-2 bg-bg-card rounded border border-accent-red/30">Sniper</button>
-      <button className="p-2 bg-bg-card rounded border border-accent-red/30">Checkpoint</button>
-    </div>
-  </div>
-);
+import { MissionReplay } from '../mission/MissionReplay';
+import { StrategyComparison } from '../mission/StrategyComparison';
 
-export const WhatIfPanel = () => (
-  <div className="p-4 text-text-primary">
-    <h2 className="text-xl font-bold mb-4 glow-text text-accent-amber">What-If Simulation</h2>
-    <button className="w-full p-2 bg-accent-amber/20 border border-accent-amber text-accent-amber rounded">Run Scenario</button>
-  </div>
-);
+export const ThreatPanel = () => {
+  const [activeThreat, setActiveThreat] = React.useState<string | null>(null);
+
+  const threats = [
+    { id: 'sniper', label: 'Sniper Position', color: 'border-accent-red' },
+    { id: 'checkpoint', label: 'Enemy Checkpoint', color: 'border-accent-amber' },
+    { id: 'ied', label: 'IED Suspected', color: 'border-accent-red' },
+    { id: 'patrol', label: 'Patrol Route', color: 'border-accent-amber' }
+  ];
+
+  return (
+    <div className="p-4 text-text-primary">
+      <h2 className="text-xl font-bold mb-4 glow-text text-accent-red">Threat Injection</h2>
+      <p className="text-text-secondary text-sm mb-4">Select a threat type and click on the map to inject it into the simulation environment.</p>
+      
+      <div className="grid grid-cols-2 gap-3 mt-4">
+        {threats.map(t => (
+          <button 
+            key={t.id}
+            onClick={() => setActiveThreat(t.id)}
+            className={`p-3 bg-bg-card rounded border-2 transition-colors ${activeThreat === t.id ? t.color + ' bg-bg-secondary' : 'border-transparent hover:border-bg-secondary'}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeThreat && (
+        <div className="mt-6 p-4 bg-accent-red/10 border border-accent-red/30 rounded">
+          <p className="text-accent-red text-sm font-bold animate-pulse">Click on map to place threat</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const WhatIfPanel = () => {
+  const [isSimulating, setIsSimulating] = React.useState(false);
+  const [result, setResult] = React.useState<any>(null);
+
+  const runSimulation = () => {
+    setIsSimulating(true);
+    // Simulate API call
+    setTimeout(() => {
+      setResult({
+        metrics: { riskIncrease: '+15%', routeDivergence: '400m', timeDelay: '+12min' },
+        message: 'Scenario resulted in elevated risk. Re-routing required.'
+      });
+      setIsSimulating(false);
+    }, 1500);
+  };
+
+  return (
+    <div className="p-4 text-text-primary flex flex-col h-full overflow-y-auto">
+      <h2 className="text-xl font-bold mb-4 glow-text text-accent-amber">What-If Simulation</h2>
+      
+      <div className="mb-6">
+        <label className="block text-sm text-text-secondary mb-2">Scenario Type</label>
+        <select className="w-full bg-bg-card border border-bg-secondary rounded p-2 text-text-primary">
+          <option>Main Route Blocked</option>
+          <option>Weather Deterioration (Fog)</option>
+          <option>Unexpected Threat Encounter</option>
+          <option>Comms Jamming</option>
+        </select>
+      </div>
+
+      <button 
+        onClick={runSimulation}
+        disabled={isSimulating}
+        className={`w-full p-3 rounded font-bold transition-colors ${isSimulating ? 'bg-bg-secondary text-text-secondary' : 'bg-accent-amber/20 border border-accent-amber text-accent-amber hover:bg-accent-amber/30'}`}
+      >
+        {isSimulating ? 'Running Simulation...' : 'Run Scenario'}
+      </button>
+
+      {result && (
+        <div className="mt-6 border border-accent-amber/30 rounded p-4 bg-bg-card">
+          <h3 className="font-bold text-accent-amber mb-2">Simulation Results</h3>
+          <p className="text-sm text-text-secondary mb-4">{result.message}</p>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="bg-bg-primary p-2 rounded">
+              <div className="text-text-secondary text-xs">Risk Change</div>
+              <div className="text-accent-red font-bold">{result.metrics.riskIncrease}</div>
+            </div>
+            <div className="bg-bg-primary p-2 rounded">
+              <div className="text-text-secondary text-xs">Time Delay</div>
+              <div className="text-accent-amber font-bold">{result.metrics.timeDelay}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8 border-t border-bg-secondary pt-4">
+        <MissionReplay />
+      </div>
+      <div className="mt-4">
+        <StrategyComparison />
+      </div>
+    </div>
+  );
+};
 
 export const AIAssistantPanel = () => (
   <div className="p-4 text-text-primary flex flex-col h-full">
