@@ -11,6 +11,7 @@ interface MapState {
   mousePosition: LatLng | null;
   coordinateFormat: 'decimal' | 'dms';
   bounds: { min_lat: number; max_lat: number; min_lng: number; max_lng: number } | null;
+  autoSync: boolean;
 
   setCenter: (center: LatLng) => void;
   setZoom: (zoom: number) => void;
@@ -22,6 +23,7 @@ interface MapState {
   setMousePosition: (position: LatLng | null) => void;
   setCoordinateFormat: (format: 'decimal' | 'dms') => void;
   setBounds: (bounds: { min_lat: number; max_lat: number; min_lng: number; max_lng: number }) => void;
+  setAutoSync: (val: boolean) => void;
   resetPoints: () => void;
 }
 
@@ -44,6 +46,7 @@ export const useMapStore = create<MapState>((set) => ({
   mousePosition: null,
   coordinateFormat: 'decimal',
   bounds: null,
+  autoSync: true,
 
   setCenter: (center) => set({ center }),
   setZoom: (zoom) => set({ zoom }),
@@ -68,5 +71,6 @@ export const useMapStore = create<MapState>((set) => ({
   setMousePosition: (position) => set({ mousePosition: position }),
   setCoordinateFormat: (format) => set({ coordinateFormat: format }),
   setBounds: (bounds) => set({ bounds }),
+  setAutoSync: (val) => set({ autoSync: val }),
   resetPoints: () => set({ startPoint: null, endPoint: null, selectedPoint: null }),
 }));

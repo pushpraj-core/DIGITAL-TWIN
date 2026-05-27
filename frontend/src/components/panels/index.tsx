@@ -6,6 +6,8 @@ import { useMissionStore } from '../../stores/missionStore';
 
 export const UploadPanel = () => {
   const bounds = useMapStore((s) => s.bounds);
+  const autoSync = useMapStore((s) => s.autoSync);
+  const setAutoSync = useMapStore((s) => s.setAutoSync);
   const [isFetching, setIsFetching] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   
@@ -30,7 +32,22 @@ export const UploadPanel = () => {
 
   return (
     <div className="p-4 text-text-primary">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-cyan">Live Area Selection</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold glow-text text-accent-cyan">Live Area Selection</h2>
+      </div>
+
+      <div className="flex items-center justify-between p-3 mb-4 bg-bg-card border border-accent-cyan/30 rounded">
+        <div>
+          <h3 className="font-bold text-accent-cyan text-sm">Auto-Sync Map</h3>
+          <p className="text-[10px] text-text-secondary">Fetch data automatically on pan</p>
+        </div>
+        <button 
+          onClick={() => setAutoSync(!autoSync)}
+          className={`w-12 h-6 rounded-full transition-colors relative ${autoSync ? 'bg-accent-cyan' : 'bg-bg-secondary'}`}
+        >
+          <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${autoSync ? 'left-7' : 'left-1'}`} />
+        </button>
+      </div>
       
       {!terrainData ? (
         <div className="border-2 border-dashed border-accent-cyan/50 rounded-lg p-6 text-center bg-bg-card/50">
@@ -50,11 +67,11 @@ export const UploadPanel = () => {
           )}
         </div>
       ) : (
-        <div className="border border-accent-green/30 rounded-lg p-4 bg-accent-green/10">
+        <div className="border border-accent-green/30 rounded-lg p-4 bg-accent-green/10 mb-4">
           <div className="text-accent-green font-bold mb-2 flex items-center">
             <span className="mr-2">✓</span> Area Data Active
           </div>
-          <p className="text-xs text-text-secondary mb-4">Satellite imagery, elevation, and weather models are loaded for this area.</p>
+          <p className="text-xs text-text-secondary mb-4">Satellite imagery, elevation, and weather models are loaded.</p>
           <button 
             onClick={() => clearAll()}
             className="w-full py-2 bg-accent-red/20 text-accent-red border border-accent-red/30 rounded hover:bg-accent-red/30 text-sm font-bold"
@@ -121,7 +138,7 @@ export const PathPlannerPanel = () => {
   const [isPlanning, setIsPlanning] = React.useState(false);
   const [noRouteFound, setNoRouteFound] = React.useState(false);
 
-  const planRoute = async (missionType: string) => {
+  const planRoute = React.useCallback(async (missionType: string) => {
     if (!startPoint || !endPoint || !terrainData) return;
     setIsPlanning(true);
     setNoRouteFound(false);
@@ -144,7 +161,14 @@ export const PathPlannerPanel = () => {
     } finally {
       setIsPlanning(false);
     }
-  };
+  }, [startPoint, endPoint, terrainData, setRoutes]);
+
+  React.useEffect(() => {
+    // Auto-recalculate safest route if points change
+    if (startPoint && endPoint && terrainData) {
+      planRoute('safest');
+    }
+  }, [startPoint, endPoint, terrainData, planRoute]);
 
   const clearPoints = () => {
     useMapStore.getState().setStartPoint(null);
@@ -218,7 +242,7 @@ export const ObservationPanel = () => {
 
   return (
     <div className="p-4 text-text-primary">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-cyan">Observation</h2>
+      <h2 className="text-xl font-bold mb-4 glow-text text-accent-cyan">Vision Mode</h2>
       
       {!terrainData ? (
         <div className="mb-4 p-3 bg-accent-red/10 border border-accent-red/30 rounded text-accent-red text-sm">
@@ -226,13 +250,13 @@ export const ObservationPanel = () => {
         </div>
       ) : (
         <>
-          <p className="text-text-secondary text-sm mb-4">Run a 3D viewshed analysis to determine Line-of-Sight visibility across the elevation model.</p>
+          <p className="text-text-secondary text-sm mb-4">Click anywhere on the map to instantly reveal hidden terrain and direct lines of sight.</p>
           
           <button 
             onClick={() => setClickMode(clickMode === 'observer' ? 'none' : 'observer')}
             className={`w-full py-3 mb-6 rounded font-bold transition-colors ${clickMode === 'observer' ? 'bg-bg-secondary border-2 border-accent-cyan text-accent-cyan animate-pulse' : 'bg-bg-card border-2 border-transparent hover:border-accent-cyan/50 text-text-primary'}`}
           >
-            {clickMode === 'observer' ? 'Click on map to place Observer...' : 'Place Observer Point'}
+            {clickMode === 'observer' ? 'Click on map...' : 'Enable Vision Mode'}
           </button>
 
           {visibility && (
@@ -350,12 +374,12 @@ export const WhatIfPanel = () => {
 
   const [scenarioType, setScenarioType] = React.useState('Main Route Blocked');
 
-  const runSimulation = async () => {
+  const runSimulation = async (type: string) => {
     setIsSimulating(true);
     setResult(null);
     try {
       const response = await api.post('/whatif/simulate', { 
-        scenario_type: scenarioType,
+        scenario_type: type,
         params: { terrain_id: terrainData?.analysis?.id }
       });
       setResult(response.data);
@@ -366,31 +390,36 @@ export const WhatIfPanel = () => {
     }
   };
 
+  const scenarios = [
+    { label: 'Main Route Blocked', type: 'Main Route Blocked', color: 'border-accent-red' },
+    { label: 'Weather Deterioration', type: 'Weather Deterioration (Fog)', color: 'border-accent-cyan' },
+    { label: 'Unexpected Threat', type: 'Unexpected Threat Encounter', color: 'border-accent-amber' },
+    { label: 'Comms Jamming', type: 'Comms Jamming', color: 'border-text-secondary' },
+  ];
+
   return (
     <div className="p-4 text-text-primary flex flex-col h-full overflow-y-auto">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-amber">What-If Simulation</h2>
+      <h2 className="text-xl font-bold mb-4 glow-text text-accent-amber">What-If Scenarios</h2>
+      <p className="text-text-secondary text-sm mb-4">Click a scenario below to instantly simulate its impact on the mission.</p>
       
-      <div className="mb-6">
-        <label className="block text-sm text-text-secondary mb-2">Scenario Type</label>
-        <select 
-          className="w-full bg-bg-card border border-bg-secondary rounded p-2 text-text-primary"
-          value={scenarioType}
-          onChange={(e) => setScenarioType(e.target.value)}
-        >
-          <option>Main Route Blocked</option>
-          <option>Weather Deterioration (Fog)</option>
-          <option>Unexpected Threat Encounter</option>
-          <option>Comms Jamming</option>
-        </select>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {scenarios.map(s => (
+          <button 
+            key={s.type}
+            onClick={() => runSimulation(s.type)}
+            disabled={isSimulating}
+            className={`p-3 bg-bg-card rounded border border-bg-secondary hover:${s.color} hover:bg-bg-secondary transition-colors text-sm font-bold disabled:opacity-50 text-left`}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
 
-      <button 
-        onClick={runSimulation}
-        disabled={isSimulating}
-        className={`w-full p-3 rounded font-bold transition-colors ${isSimulating ? 'bg-bg-secondary text-text-secondary' : 'bg-accent-amber/20 border border-accent-amber text-accent-amber hover:bg-accent-amber/30'}`}
-      >
-        {isSimulating ? 'Running Simulation...' : 'Run Scenario'}
-      </button>
+      {isSimulating && (
+        <div className="text-center text-accent-amber animate-pulse mb-6 text-sm">
+          Running scenario analysis...
+        </div>
+      )}
 
       {result && (
         <div className="mt-6 border border-accent-amber/30 rounded p-4 bg-bg-card">

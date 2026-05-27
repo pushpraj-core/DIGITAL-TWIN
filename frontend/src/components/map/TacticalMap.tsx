@@ -108,12 +108,23 @@ function MapEventHandler() {
     click: handleClick,
     moveend: () => {
       const b = map.getBounds();
-      setBounds({
+      const newBounds = {
         min_lat: b.getSouth(),
         max_lat: b.getNorth(),
         min_lng: b.getWest(),
         max_lng: b.getEast(),
-      });
+      };
+      setBounds(newBounds);
+
+      // Auto-fetch Live Area if autoSync is enabled
+      const autoSync = useMapStore.getState().autoSync;
+      if (autoSync) {
+        api.post('/terrain/fetch_live', { bounds: newBounds })
+          .then((response) => {
+            useMissionStore.getState().setTerrainData(response.data);
+          })
+          .catch((err) => console.error("Auto-sync fetch failed:", err));
+      }
     }
   });
 
@@ -145,6 +156,8 @@ export default function TacticalMap() {
   const zoom = useMapStore((s) => s.zoom);
   const startPoint = useMapStore((s) => s.startPoint);
   const endPoint = useMapStore((s) => s.endPoint);
+  const setStartPoint = useMapStore((s) => s.setStartPoint);
+  const setEndPoint = useMapStore((s) => s.setEndPoint);
   const layers = useMapStore((s) => s.layers);
   const visibility = useMissionStore((s) => s.visibility);
 
@@ -167,9 +180,16 @@ export default function TacticalMap() {
 
       <MapEventHandler />
 
-      {/* Start marker */}
       {startPoint && (
         <Marker
+          draggable={true}
+          eventHandlers={{
+            dragend: (e) => {
+              const marker = e.target;
+              const pos = marker.getLatLng();
+              setStartPoint({ lat: pos.lat, lng: pos.lng });
+            },
+          }}
           position={[startPoint.lat, startPoint.lng]}
           icon={startIcon}
         >
@@ -177,15 +197,22 @@ export default function TacticalMap() {
             <div className="font-mono text-xs">
               <strong className="text-emerald-400">START POINT</strong>
               <br />
-              {startPoint.lat.toFixed(6)}, {startPoint.lng.toFixed(6)}
+              <span className="text-[10px] text-slate-500">Drag to move</span>
             </div>
           </Popup>
         </Marker>
       )}
 
-      {/* End marker */}
       {endPoint && (
         <Marker
+          draggable={true}
+          eventHandlers={{
+            dragend: (e) => {
+              const marker = e.target;
+              const pos = marker.getLatLng();
+              setEndPoint({ lat: pos.lat, lng: pos.lng });
+            },
+          }}
           position={[endPoint.lat, endPoint.lng]}
           icon={endIcon}
         >
@@ -193,7 +220,7 @@ export default function TacticalMap() {
             <div className="font-mono text-xs">
               <strong className="text-red-400">END POINT</strong>
               <br />
-              {endPoint.lat.toFixed(6)}, {endPoint.lng.toFixed(6)}
+              <span className="text-[10px] text-slate-500">Drag to move</span>
             </div>
           </Popup>
         </Marker>
