@@ -1,5 +1,5 @@
 import React from 'react';
-import { Polygon, Tooltip, Rectangle } from 'react-leaflet';
+import { Polygon, Tooltip } from 'react-leaflet';
 import { useMissionStore } from '../../stores/missionStore';
 
 // Define tactical colors and opacity for different terrain types
@@ -60,19 +60,6 @@ export default function TerrainOverlay() {
           </Polygon>
         );
       })}
-      <Rectangle
-        bounds={[
-          [terrainData.bounds.min_lat, terrainData.bounds.min_lng],
-          [terrainData.bounds.max_lat, terrainData.bounds.max_lng],
-        ]}
-        pathOptions={{
-          color: '#06b6d4', // cyan-500
-          weight: 2,
-          fillOpacity: 0,
-          dashArray: '5, 5',
-          className: 'pointer-events-none'
-        }}
-      />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, useMapEvents, Marker, Popup, Polygon, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMapEvents, Marker, Popup, Polygon, useMap, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
 import api from '../../services/api';
 import { useMapStore } from '../../stores/mapStore';
@@ -183,8 +183,10 @@ export default function TacticalMap() {
   const endPoint = useMapStore((s) => s.endPoint);
   const setStartPoint = useMapStore((s) => s.setStartPoint);
   const setEndPoint = useMapStore((s) => s.setEndPoint);
-  const layers = useMapStore((s) => s.layers);
+  const activeThreatType = useUIStore((s) => s.activeThreatType);
+  const bounds = useMapStore((s) => s.bounds);
   const visibility = useMissionStore((s) => s.visibility);
+  const layers = useMapStore((s) => s.layers);
 
 
   const isLayerVisible = (id: string) => layers.find((l) => l.id === id)?.visible ?? false;
@@ -212,6 +214,22 @@ export default function TacticalMap() {
       />
 
       <MapEventHandler />
+
+      {bounds && !useMapStore.getState().autoSync && (
+        <Rectangle
+          bounds={[
+            [bounds.min_lat, bounds.min_lng],
+            [bounds.max_lat, bounds.max_lng],
+          ]}
+          pathOptions={{
+            color: '#06b6d4', // cyan-500
+            weight: 2,
+            fillOpacity: 0.05,
+            dashArray: '8, 8',
+            className: 'pointer-events-none'
+          }}
+        />
+      )}
 
       {startPoint && (
         <Marker
