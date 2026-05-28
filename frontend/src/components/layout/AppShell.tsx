@@ -38,7 +38,7 @@ function RiskDataSync() {
   const terrainData = useMissionStore((s) => s.terrainData);
   const threats = useMissionStore((s) => s.threats);
   const setRiskHeatmap = useMissionStore((s) => s.setRiskHeatmap);
-  const setRoutes = useMissionStore((s) => s.setRoutes); // clear routes if environment changes
+  const setRoutes = useMissionStore((s) => s.setRoutes);
 
   useEffect(() => {
     if (!terrainData) {
@@ -49,10 +49,15 @@ function RiskDataSync() {
     let isMounted = true;
     const fetchRisk = async () => {
       try {
-        const response = await api.post('/risk/compute', {
-          terrain_id: terrainData.analysis.id,
+        const response = await api.post('/risk/simulate', {
+          terrain_id: terrainData.id,
           include_threats: true,
-          threats: threats
+          threats: threats.map(t => ({
+            ...t,
+            position: t.position,
+            lat: t.position.lat,
+            lng: t.position.lng,
+          }))
         });
         if (isMounted) {
           setRiskHeatmap(response.data);
@@ -63,10 +68,10 @@ function RiskDataSync() {
       }
     };
     
-    // Add a slight debounce to prevent spamming the backend if many threats are placed
+    // Debounce to prevent spamming the backend
     const timer = setTimeout(() => {
       fetchRisk();
-    }, 300);
+    }, 400);
     
     return () => { 
       isMounted = false; 

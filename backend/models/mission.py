@@ -25,16 +25,21 @@ class RouteRequest(BaseModel):
     threats: list[dict[str, Any]] = Field(default_factory=list, description="List of active threats")
 
 
+class RouteWaypoint(BaseModel):
+    lat: float
+    lng: float
+
+
 class RouteResult(BaseModel):
     """A single planned route."""
 
     id: str
     name: str
-    path: list[list[float]] = Field(
-        ..., description="Ordered list of [lat, lng] waypoints"
+    path: list[RouteWaypoint] = Field(
+        ..., description="Ordered list of waypoints"
     )
-    distance_m: float
-    estimated_time_s: float
+    distance: float
+    estimated_time: float
     exposure_score: float
     risk_score: float
     color: str = Field(default="#00f0ff")

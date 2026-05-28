@@ -308,19 +308,19 @@ class MovementPlanner:
         grid_shape = terrain_grid.shape
 
         # Convert to lat/lng
-        latlng_path: list[list[float]] = []
+        latlng_path: list[dict[str, float]] = []
         for r, c in path:
             lat, lng = grid_to_lat_lng(r, c, bounds, grid_shape)
-            latlng_path.append([lat, lng])
+            latlng_path.append({"lat": lat, "lng": lng})
 
         # Distance (sum of haversine between consecutive points)
         total_dist = 0.0
         for i in range(1, len(latlng_path)):
             total_dist += haversine_distance(
-                latlng_path[i - 1][0],
-                latlng_path[i - 1][1],
-                latlng_path[i][0],
-                latlng_path[i][1],
+                latlng_path[i - 1]["lat"],
+                latlng_path[i - 1]["lng"],
+                latlng_path[i]["lat"],
+                latlng_path[i]["lng"],
             )
 
         # Risk / exposure scores (average along path)
@@ -341,8 +341,8 @@ class MovementPlanner:
             id=uuid.uuid4().hex[:10],
             name=name,
             path=latlng_path,
-            distance_m=round(total_dist, 2),
-            estimated_time_s=round(est_time, 1),
+            distance=round(total_dist, 2),
+            estimated_time=round(est_time, 1),
             exposure_score=round(exposure_score, 4),
             risk_score=round(avg_risk, 4),
             color=colour,

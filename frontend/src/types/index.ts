@@ -90,6 +90,10 @@ export type ThreatType =
   | 'tower'
   | 'blocked_road'
   | 'danger_zone'
+  | 'ied'
+  | 'patrol'
+  | 'enemy_outpost'
+  | 'hostile_zone'
   | string;
 
 export interface Threat {

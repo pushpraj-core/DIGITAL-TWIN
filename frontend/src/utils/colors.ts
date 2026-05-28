@@ -43,28 +43,40 @@ export const terrainClassLabels: Record<TerrainClass, string> = {
   forest: 'Forest Cover',
 };
 
-export const threatTypeColors: Record<ThreatType, string> = {
+export const threatTypeColors: Record<string, string> = {
   checkpoint: '#f59e0b',
   sniper: '#ef4444',
   tower: '#f97316',
   blocked_road: '#a855f7',
   danger_zone: '#dc2626',
+  ied: '#ff3333',
+  patrol: '#ff8c00',
+  enemy_outpost: '#dc2626',
+  hostile_zone: '#b91c1c',
 };
 
-export const threatTypeLabels: Record<ThreatType, string> = {
+export const threatTypeLabels: Record<string, string> = {
   checkpoint: 'Checkpoint',
   sniper: 'Sniper Position',
   tower: 'Watch Tower',
   blocked_road: 'Blocked Road',
   danger_zone: 'Danger Zone',
+  ied: 'IED Suspected',
+  patrol: 'Enemy Patrol',
+  enemy_outpost: 'Enemy Outpost',
+  hostile_zone: 'Hostile Zone',
 };
 
-export const threatTypeIcons: Record<ThreatType, string> = {
+export const threatTypeIcons: Record<string, string> = {
   checkpoint: '🛡',
   sniper: '🎯',
   tower: '🗼',
   blocked_road: '🚧',
   danger_zone: '☠',
+  ied: '💣',
+  patrol: '👥',
+  enemy_outpost: '🏴',
+  hostile_zone: '⛔',
 };
 
 export const missionTypeColors: Record<string, string> = {

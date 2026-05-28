@@ -178,7 +178,7 @@ export const PathPlannerPanel = () => {
         end_lat: endPoint.lat,
         end_lng: endPoint.lng,
         mission_type: missionType,
-        terrain_id: terrainData.analysis.id,
+        terrain_id: terrainData.id,
         threats: useMissionStore.getState().threats
       });
       setRoutes(response.data.routes);

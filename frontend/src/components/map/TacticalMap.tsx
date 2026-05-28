@@ -69,7 +69,7 @@ function MapEventHandler() {
             if (!terrainData) return;
             try {
               const res = await api.post('/observation/visibility', {
-                terrain_id: terrainData.analysis.id,
+                terrain_id: terrainData.id,
                 observer_lat: point.lat,
                 observer_lng: point.lng,
                 range_m: 500,
