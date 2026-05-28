@@ -4,7 +4,11 @@ import api from '../../services/api';
 import { useMapStore } from '../../stores/mapStore';
 import { useMissionStore } from '../../stores/missionStore';
 import { useUIStore } from '../../stores/uiStore';
-import { Map, Shield, Crosshair, Route, Eye } from 'lucide-react';
+import { Map, Shield, Crosshair, Route, Eye, Globe, ChevronRight, Zap, AlertTriangle } from 'lucide-react';
+
+/* ═══════════════════════════════════════════════════════════════
+   SHARED: Empty State + Next-Step Banner
+   ═══════════════════════════════════════════════════════════════ */
 
 const EmptyState = ({ icon, title, description, actionLabel, onAction }: any) => (
   <div className="border border-dashed border-slate-700/50 rounded-lg p-6 text-center bg-bg-card/50 flex flex-col items-center">
@@ -21,6 +25,24 @@ const EmptyState = ({ icon, title, description, actionLabel, onAction }: any) =>
     )}
   </div>
 );
+
+const NextStepBanner = ({ text, targetTab }: { text: string; targetTab: string }) => {
+  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
+  return (
+    <button
+      onClick={() => setActiveRightTab(targetTab)}
+      className="w-full mt-4 flex items-center gap-3 px-4 py-3 bg-cyan-500/5 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all group"
+    >
+      <Zap className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+      <span className="text-xs text-cyan-400/80 text-left flex-1">{text}</span>
+      <ChevronRight className="w-4 h-4 text-cyan-400/50 group-hover:text-cyan-400 transition-colors" />
+    </button>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 1: UPLOAD / MISSION AREA
+   ═══════════════════════════════════════════════════════════════ */
 
 export const UploadPanel = () => {
   const bounds = useMapStore((s) => s.bounds);
@@ -51,49 +73,74 @@ export const UploadPanel = () => {
 
   return (
     <div className="p-4 text-text-primary">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold glow-text text-accent-cyan">Environment Overview</h2>
+      <div className="flex justify-between items-center mb-1">
+        <h2 className="text-lg font-bold glow-text text-accent-cyan">Mission Area</h2>
       </div>
+      <p className="text-xs text-text-secondary mb-4">Select and fetch the operational environment.</p>
 
-      <div className="flex items-center justify-between p-3 mb-4 bg-bg-card border border-accent-cyan/30 rounded">
-        <div>
-          <h3 className="font-bold text-accent-cyan text-sm">Auto-Sync Map</h3>
-          <p className="text-[10px] text-text-secondary">Fetch data automatically on pan</p>
-        </div>
-        <button 
-          onClick={() => setAutoSync(!autoSync)}
-          className={`w-12 h-6 rounded-full transition-colors relative ${autoSync ? 'bg-accent-cyan' : 'bg-bg-secondary'}`}
-        >
-          <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${autoSync ? 'left-7' : 'left-1'}`} />
-        </button>
-      </div>
-      
       {!terrainData ? (
-        <EmptyState 
-          icon={<Map className="w-8 h-8" />}
-          title="Awaiting Area"
-          description="Click anywhere on the map to define your target area and fetch live satellite, elevation, and intelligence data."
-          actionLabel={isFetching ? 'Downloading Area...' : 'Fetch Area Now'}
-          onAction={fetchLiveArea}
-        />
-      ) : (
-        <div className="border border-accent-green/30 rounded-lg p-4 bg-accent-green/10 mb-4">
-          <div className="text-accent-green font-bold mb-2 flex items-center">
-            <span className="mr-2">✓</span> Area Data Active
+        <>
+          <div className="border border-dashed border-cyan-500/30 rounded-xl p-8 text-center bg-cyan-500/5 flex flex-col items-center mb-4">
+            <div className="p-4 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-4">
+              <Globe className="w-10 h-10 text-cyan-400" />
+            </div>
+            <h3 className="text-cyan-400 font-bold text-sm mb-2">Select an Area to Begin Mission Analysis</h3>
+            <p className="text-slate-400 text-xs mb-6 max-w-[260px] leading-relaxed">
+              Click anywhere on the map to define a tactical area. The system will automatically download satellite imagery, terrain, elevation, and weather data.
+            </p>
+            <button 
+              onClick={fetchLiveArea}
+              disabled={!bounds || isFetching}
+              className="px-6 py-2.5 bg-cyan-500/15 text-cyan-400 border border-cyan-500/40 rounded-lg hover:bg-cyan-500/25 text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(0,240,255,0.1)] hover:shadow-[0_0_25px_rgba(0,240,255,0.2)]"
+            >
+              {isFetching ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+                  Downloading Area...
+                </span>
+              ) : 'Fetch Mission Area'}
+            </button>
           </div>
-          <p className="text-xs text-text-secondary mb-3">Satellite imagery, elevation, and weather models are loaded.</p>
+
+          {errorMsg && (
+            <div className="p-3 bg-accent-red/10 border border-accent-red/30 rounded text-accent-red text-xs mb-4 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              {errorMsg}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between p-3 bg-bg-card border border-slate-700/50 rounded">
+            <div>
+              <h3 className="font-bold text-slate-300 text-xs">Auto-Sync Map</h3>
+              <p className="text-[10px] text-text-secondary">Fetch data on map pan</p>
+            </div>
+            <button 
+              onClick={() => setAutoSync(!autoSync)}
+              className={`w-10 h-5 rounded-full transition-colors relative ${autoSync ? 'bg-accent-cyan' : 'bg-bg-secondary'}`}
+            >
+              <div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all ${autoSync ? 'left-[22px]' : 'left-[3px]'}`} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="border border-accent-green/30 rounded-lg p-4 bg-accent-green/5 mb-4">
+          <div className="text-accent-green font-bold mb-2 flex items-center text-sm">
+            <span className="w-2 h-2 rounded-full bg-accent-green mr-2 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+            Mission Area Active
+          </div>
+          <p className="text-xs text-text-secondary mb-3">Satellite imagery, terrain analysis, elevation, and weather data loaded.</p>
           
           {terrainData.segments && terrainData.segments.length > 0 && (
-            <div className="mb-4 bg-bg-card/50 p-2 rounded border border-slate-700">
+            <div className="mb-4 bg-bg-card/50 p-3 rounded border border-slate-700/50">
               <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-bold">Terrain Composition</div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {Object.entries(
                   terrainData.segments.reduce((acc, seg) => {
                     acc[seg.type] = (acc[seg.type] || 0) + 1;
                     return acc;
                   }, {} as Record<string, number>)
                 ).map(([type, count]) => (
-                  <div key={type} className="text-xs px-2 py-1 bg-slate-800 rounded text-slate-300">
+                  <div key={type} className="text-[11px] px-2 py-1 bg-slate-800/80 rounded text-slate-300 border border-slate-700/50">
                     <span className="capitalize">{type}</span>: <span className="text-accent-cyan font-mono">{count}</span>
                   </div>
                 ))}
@@ -101,17 +148,35 @@ export const UploadPanel = () => {
             </div>
           )}
 
+          {terrainData.weather && (
+            <div className="mb-4 bg-bg-card/50 p-3 rounded border border-slate-700/50">
+              <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-bold">Weather Conditions</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Visibility</span>
+                  <span className="font-mono text-cyan-400">{(terrainData.weather.visibility_m / 1000).toFixed(1)}km</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Precipitation</span>
+                  <span className="font-mono text-cyan-400">{terrainData.weather.precipitation}mm</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <button 
             onClick={() => clearAll()}
-            className="w-full py-2 bg-accent-red/20 text-accent-red border border-accent-red/30 rounded hover:bg-accent-red/30 text-sm font-bold"
+            className="w-full py-2 bg-accent-red/10 text-accent-red border border-accent-red/20 rounded hover:bg-accent-red/20 text-xs font-bold transition-colors"
           >
-            Clear / Select New Area
+            Clear &amp; Select New Area
           </button>
+
+          <NextStepBanner text="Next: Review terrain intelligence and add threats" targetTab="terrain" />
         </div>
       )}
       
       {bounds && (
-        <div className="mt-4 text-xs text-text-secondary font-mono bg-bg-card p-3 rounded grid grid-cols-2 gap-2">
+        <div className="mt-4 text-xs text-text-secondary font-mono bg-bg-card/50 p-3 rounded grid grid-cols-2 gap-2 border border-slate-700/30">
           <div><span className="text-accent-cyan">N:</span> {bounds.max_lat.toFixed(4)}</div>
           <div><span className="text-accent-cyan">S:</span> {bounds.min_lat.toFixed(4)}</div>
           <div><span className="text-accent-cyan">E:</span> {bounds.max_lng.toFixed(4)}</div>
@@ -122,48 +187,202 @@ export const UploadPanel = () => {
   );
 };
 
-export const TerrainPanel = () => (
-  <div className="p-4 text-text-primary">
-    <h2 className="text-xl font-bold mb-4 glow-text text-accent-green">Terrain Intelligence</h2>
-    <div className="space-y-2">
-      <div className="flex justify-between p-2 bg-bg-card rounded"><span className="text-accent-green">Safe</span><span>45%</span></div>
-      <div className="flex justify-between p-2 bg-bg-card rounded"><span className="text-accent-amber">Urban</span><span>30%</span></div>
-      <div className="flex justify-between p-2 bg-bg-card rounded"><span className="text-accent-red">Exposed</span><span>25%</span></div>
-    </div>
-  </div>
-);
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 2: TERRAIN INTELLIGENCE (now uses real data)
+   ═══════════════════════════════════════════════════════════════ */
 
-export const RiskPanel = () => {
+export const TerrainPanel = () => {
   const terrainData = useMissionStore((s) => s.terrainData);
-  const weather = terrainData?.weather;
+  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
+
+  if (!terrainData) {
+    return (
+      <div className="p-4 text-text-primary">
+        <h2 className="text-lg font-bold mb-4 glow-text text-accent-green">Terrain Intelligence</h2>
+        <EmptyState 
+          icon={<Map className="w-8 h-8" />}
+          title="No Terrain Data"
+          description="Fetch a mission area first to view terrain analysis."
+          actionLabel="Go to Mission Area"
+          onAction={() => setActiveRightTab('upload')}
+        />
+      </div>
+    );
+  }
+
+  // Calculate real terrain composition
+  const segments = terrainData.segments || [];
+  const typeCounts = segments.reduce((acc, seg) => {
+    acc[seg.type] = (acc[seg.type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const total = segments.length || 1;
+
+  const terrainColors: Record<string, string> = {
+    vegetation: 'bg-green-500',
+    forest: 'bg-green-600',
+    road: 'bg-slate-400',
+    building: 'bg-red-500',
+    water: 'bg-blue-500',
+    open: 'bg-amber-400',
+    obstacle: 'bg-orange-500',
+    urban: 'bg-indigo-500',
+    hill: 'bg-purple-500',
+  };
+
+  const terrainTextColors: Record<string, string> = {
+    vegetation: 'text-green-400',
+    forest: 'text-green-400',
+    road: 'text-slate-300',
+    building: 'text-red-400',
+    water: 'text-blue-400',
+    open: 'text-amber-400',
+    obstacle: 'text-orange-400',
+    urban: 'text-indigo-400',
+    hill: 'text-purple-400',
+  };
 
   return (
     <div className="p-4 text-text-primary">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-red">Risk Analysis</h2>
-      
-      {weather && (
-        <div className="mb-4 p-4 bg-bg-card rounded border border-accent-cyan/30">
-          <h3 className="text-accent-cyan font-bold mb-2 text-sm">Live Environmental Conditions</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-             <div>Visibility: <span className="font-mono">{weather.visibility_m}m</span></div>
-             <div>Precip: <span className="font-mono">{weather.precipitation}mm</span></div>
+      <h2 className="text-lg font-bold mb-1 glow-text text-accent-green">Terrain Intelligence</h2>
+      <p className="text-xs text-text-secondary mb-4">Auto-analyzed from satellite imagery.</p>
+
+      {/* Terrain breakdown bars */}
+      <div className="space-y-2 mb-4">
+        {Object.entries(typeCounts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([type, count]) => {
+            const pct = Math.round((count / total) * 100);
+            return (
+              <div key={type}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className={`text-xs capitalize font-bold ${terrainTextColors[type] || 'text-slate-300'}`}>
+                    {type.replace('_', ' ')}
+                  </span>
+                  <span className="text-xs font-mono text-slate-400">{pct}% ({count})</span>
+                </div>
+                <div className="h-1.5 w-full bg-bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${terrainColors[type] || 'bg-slate-500'}`}
+                    style={{ width: `${pct}%`, transition: 'width 0.5s ease' }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+      </div>
+
+      {/* Terrain classes */}
+      {terrainData.terrain_classes && terrainData.terrain_classes.length > 0 && (
+        <div className="bg-bg-card/50 p-3 rounded border border-slate-700/50 mb-4">
+          <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-bold">Detected Terrain Classes</div>
+          <div className="flex flex-wrap gap-1.5">
+            {terrainData.terrain_classes.map((cls: string) => (
+              <span key={cls} className="text-[11px] px-2 py-1 bg-accent-green/10 border border-accent-green/20 text-accent-green rounded capitalize">
+                {cls}
+              </span>
+            ))}
           </div>
         </div>
       )}
 
-      <div className="p-4 bg-bg-card rounded text-center">
-        <p className="text-text-secondary text-sm">Overall Area Risk</p>
-        <p className="text-3xl font-bold text-accent-amber">DYNAMIC</p>
-      </div>
+      <NextStepBanner text="Next: Add enemy threats to update risk analysis" targetTab="threats" />
     </div>
   );
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 3: RISK ANALYSIS
+   ═══════════════════════════════════════════════════════════════ */
+
+export const RiskPanel = () => {
+  const terrainData = useMissionStore((s) => s.terrainData);
+  const riskHeatmap = useMissionStore((s) => s.riskHeatmap);
+  const weather = terrainData?.weather;
+  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
+
+  if (!terrainData) {
+    return (
+      <div className="p-4 text-text-primary">
+        <h2 className="text-lg font-bold mb-4 glow-text text-accent-red">Risk Analysis</h2>
+        <EmptyState 
+          icon={<Shield className="w-8 h-8" />}
+          title="No Terrain Data"
+          description="Fetch a mission area first."
+          actionLabel="Go to Mission Area"
+          onAction={() => setActiveRightTab('upload')}
+        />
+      </div>
+    );
+  }
+
+  const stats = riskHeatmap?.stats;
+
+  return (
+    <div className="p-4 text-text-primary">
+      <h2 className="text-lg font-bold mb-1 glow-text text-accent-red">Risk Analysis</h2>
+      <p className="text-xs text-text-secondary mb-4">Auto-generated from terrain, elevation, and threats.</p>
+      
+      {weather && (
+        <div className="mb-4 p-3 bg-bg-card/50 rounded border border-slate-700/50">
+          <h3 className="text-accent-cyan font-bold mb-2 text-xs uppercase tracking-wider">Live Environment</h3>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+             <div className="flex justify-between">
+               <span className="text-slate-400">Visibility</span>
+               <span className="font-mono text-cyan-400">{(weather.visibility_m / 1000).toFixed(1)}km</span>
+             </div>
+             <div className="flex justify-between">
+               <span className="text-slate-400">Precipitation</span>
+               <span className="font-mono text-cyan-400">{weather.precipitation}mm</span>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {stats ? (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="p-3 bg-bg-card/50 rounded border border-slate-700/50 text-center">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Mean Risk</p>
+            <p className={`text-xl font-bold font-mono ${stats.mean_risk > 0.5 ? 'text-accent-red' : stats.mean_risk > 0.3 ? 'text-accent-amber' : 'text-accent-green'}`}>
+              {(stats.mean_risk * 100).toFixed(0)}%
+            </p>
+          </div>
+          <div className="p-3 bg-bg-card/50 rounded border border-slate-700/50 text-center">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Max Risk</p>
+            <p className="text-xl font-bold text-accent-red font-mono">{(stats.max_risk * 100).toFixed(0)}%</p>
+          </div>
+          <div className="p-3 bg-bg-card/50 rounded border border-slate-700/50 text-center">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">High Risk</p>
+            <p className="text-sm font-bold text-accent-red font-mono">{stats.high_risk_pct}%</p>
+          </div>
+          <div className="p-3 bg-bg-card/50 rounded border border-slate-700/50 text-center">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Low Risk</p>
+            <p className="text-sm font-bold text-accent-green font-mono">{stats.low_risk_pct}%</p>
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 bg-bg-card/50 rounded text-center border border-slate-700/50 mb-4">
+          <p className="text-text-secondary text-sm animate-pulse">Calculating risk heatmap...</p>
+        </div>
+      )}
+
+      <NextStepBanner text="Next: Add enemy threats to refine risk zones" targetTab="threats" />
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 4: PATH PLANNER / MOVEMENT
+   ═══════════════════════════════════════════════════════════════ */
 
 export const PathPlannerPanel = () => {
   const startPoint = useMapStore((s) => s.startPoint);
   const endPoint = useMapStore((s) => s.endPoint);
   const terrainData = useMissionStore((s) => s.terrainData);
+  const routes = useMissionStore((s) => s.routes);
   const setRoutes = useMissionStore((s) => s.setRoutes);
+  const selectedRouteId = useMissionStore((s) => s.selectedRouteId);
+  const setSelectedRouteId = useMissionStore((s) => s.setSelectedRouteId);
   const [isPlanning, setIsPlanning] = React.useState(false);
   const [noRouteFound, setNoRouteFound] = React.useState(false);
 
@@ -184,20 +403,15 @@ export const PathPlannerPanel = () => {
       setRoutes(response.data.routes);
       if (response.data.routes.length === 0) {
         setNoRouteFound(true);
+      } else {
+        setSelectedRouteId(response.data.routes[0].id);
       }
     } catch (error) {
       console.error(error);
     } finally {
       setIsPlanning(false);
     }
-  }, [startPoint, endPoint, terrainData, setRoutes]);
-
-  React.useEffect(() => {
-    // Auto-recalculate safest route if points change
-    if (startPoint && endPoint && terrainData) {
-      planRoute('safest');
-    }
-  }, [startPoint, endPoint, terrainData, planRoute]);
+  }, [startPoint, endPoint, terrainData, setRoutes, setSelectedRouteId]);
 
   const clearPoints = () => {
     useMapStore.getState().setStartPoint(null);
@@ -210,35 +424,36 @@ export const PathPlannerPanel = () => {
 
   return (
     <div className="p-4 text-text-primary">
-      <h2 className="text-xl font-bold mb-4 glow-text text-cyan-400">Movement Planner</h2>
+      <h2 className="text-lg font-bold mb-1 glow-text text-cyan-400">Movement Planner</h2>
+      <p className="text-xs text-text-secondary mb-4">Plan optimal routes using terrain, risk, and threats.</p>
       
       {!terrainData && (
         <EmptyState 
           icon={<Map className="w-8 h-8" />}
           title="Terrain Required"
-          description="Please fetch a Live Area first before planning routes."
-          actionLabel="Go to Upload Panel"
+          description="Fetch a mission area first before planning routes."
+          actionLabel="Go to Mission Area"
           onAction={() => setActiveRightTab('upload')}
         />
       )}
       
       {terrainData && (!startPoint || !endPoint) && (
-        <div className="border border-dashed border-slate-700/50 rounded-lg p-6 text-center bg-bg-card/50 flex flex-col items-center">
-          <Route className="w-8 h-8 text-slate-500 mb-3" />
-          <h3 className="text-slate-300 font-bold mb-2">Place Waypoints</h3>
-          <p className="text-slate-500 text-xs mb-4">Click the buttons below, then click on the map to set your points.</p>
+        <div className="border border-dashed border-cyan-500/20 rounded-lg p-6 text-center bg-cyan-500/5 flex flex-col items-center">
+          <Route className="w-8 h-8 text-cyan-400/50 mb-3" />
+          <h3 className="text-slate-300 font-bold mb-2 text-sm">Place Start &amp; End Points</h3>
+          <p className="text-slate-500 text-xs mb-4">Use the buttons below, then click on the map.</p>
           <div className="flex gap-2">
             <button 
               onClick={() => useUIStore.getState().setClickMode('start')}
-              className={`px-4 py-2 text-xs font-bold rounded transition-colors ${!startPoint ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-bg-secondary text-text-secondary'}`}
+              className={`px-4 py-2 text-xs font-bold rounded transition-all ${!startPoint ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/25' : 'bg-bg-secondary text-text-secondary border border-slate-700'}`}
             >
-              {startPoint ? 'Start Set ✓' : 'Set Start Point'}
+              {startPoint ? '✓ Start Set' : 'Set Start'}
             </button>
             <button 
               onClick={() => useUIStore.getState().setClickMode('end')}
-              className={`px-4 py-2 text-xs font-bold rounded transition-colors ${!endPoint ? 'bg-red-500/20 text-red-400 border border-red-500/50' : 'bg-bg-secondary text-text-secondary'}`}
+              className={`px-4 py-2 text-xs font-bold rounded transition-all ${!endPoint ? 'bg-red-500/15 text-red-400 border border-red-500/40 hover:bg-red-500/25' : 'bg-bg-secondary text-text-secondary border border-slate-700'}`}
             >
-              {endPoint ? 'End Set ✓' : 'Set End Point'}
+              {endPoint ? '✓ End Set' : 'Set End'}
             </button>
           </div>
         </div>
@@ -247,98 +462,169 @@ export const PathPlannerPanel = () => {
       {(startPoint || endPoint) && (
         <button 
           onClick={clearPoints}
-          className="w-full py-2 mb-4 bg-accent-red/20 text-accent-red border border-accent-red/30 rounded hover:bg-accent-red/30 text-sm font-bold"
+          className="w-full py-2 mb-4 bg-accent-red/10 text-accent-red border border-accent-red/20 rounded hover:bg-accent-red/20 text-xs font-bold transition-colors"
         >
           Clear Points
         </button>
       )}
 
-      <div className="space-y-4">
-        <button 
-          disabled={!startPoint || !endPoint || !terrainData || isPlanning}
-          onClick={() => planRoute('stealth')}
-          className="w-full py-2 bg-bg-card hover:bg-accent-cyan/20 border border-accent-cyan/30 rounded text-left px-4 disabled:opacity-50">
-          Stealth (Min Exposure)
-        </button>
-        <button 
-          disabled={!startPoint || !endPoint || !terrainData || isPlanning}
-          onClick={() => planRoute('fastest')}
-          className="w-full py-2 bg-bg-card hover:bg-accent-amber/20 border border-accent-amber/30 rounded text-left px-4 disabled:opacity-50">
-          Fastest (Min Distance)
-        </button>
-        <button 
-          disabled={!startPoint || !endPoint || !terrainData || isPlanning}
-          onClick={() => planRoute('safest')}
-          className="w-full py-2 bg-bg-card hover:bg-accent-green/20 border border-accent-green/30 rounded text-left px-4 disabled:opacity-50">
-          Safest (Min Risk)
-        </button>
-      </div>
+      {/* Route mode buttons */}
+      {terrainData && startPoint && endPoint && (
+        <div className="space-y-2 mb-4">
+          <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Route Strategy</div>
+          {[
+            { type: 'stealth', label: 'Stealth', desc: 'Maximum concealment', color: 'border-purple-500/30 hover:bg-purple-500/10' },
+            { type: 'fastest', label: 'Fastest', desc: 'Minimum distance', color: 'border-amber-500/30 hover:bg-amber-500/10' },
+            { type: 'safest', label: 'Safest', desc: 'Minimum risk', color: 'border-green-500/30 hover:bg-green-500/10' },
+          ].map(m => (
+            <button 
+              key={m.type}
+              disabled={isPlanning}
+              onClick={() => planRoute(m.type)}
+              className={`w-full py-2.5 bg-bg-card border ${m.color} rounded text-left px-4 disabled:opacity-50 transition-all`}
+            >
+              <div className="text-sm font-bold text-text-primary">{m.label}</div>
+              <div className="text-[10px] text-text-secondary">{m.desc}</div>
+            </button>
+          ))}
+        </div>
+      )}
       
       {isPlanning && <div className="mt-4 text-center text-accent-cyan text-sm animate-pulse">Calculating optimal routes...</div>}
       
       {noRouteFound && !isPlanning && (
-        <div className="mt-4 p-3 bg-accent-red/20 border border-accent-red/50 text-accent-red text-sm rounded">
-          <strong>No Path Found!</strong> The area between the Start and End points is entirely blocked by impassable terrain, buildings, or water. Try moving your markers.
+        <div className="mt-4 p-3 bg-accent-red/10 border border-accent-red/30 text-accent-red text-xs rounded flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div><strong>No Path Found!</strong> The area is entirely blocked by impassable terrain. Try moving your markers.</div>
+        </div>
+      )}
+
+      {/* Route results */}
+      {routes.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Route Results</div>
+          {routes.map(route => (
+            <button
+              key={route.id}
+              onClick={() => setSelectedRouteId(route.id)}
+              className={`w-full text-left p-3 rounded-lg border transition-all ${
+                selectedRouteId === route.id 
+                  ? 'border-cyan-500/40 bg-cyan-500/10 shadow-[0_0_15px_rgba(0,240,255,0.1)]' 
+                  : 'border-slate-700/50 bg-bg-card/50 hover:border-slate-600'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 rounded-full" style={{ background: route.color }} />
+                <span className="text-xs font-bold text-text-primary">{route.name}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] font-mono pl-5">
+                <div className="text-slate-400">Distance: <span className="text-slate-200">{route.distance.toFixed(2)}km</span></div>
+                <div className="text-slate-400">ETA: <span className="text-slate-200">{Math.round(route.estimated_time / 60)}min</span></div>
+                <div className="text-slate-400">Risk: <span className={route.risk_score > 0.5 ? 'text-red-400' : 'text-green-400'}>{(route.risk_score * 100).toFixed(0)}%</span></div>
+                <div className="text-slate-400">Exposure: <span className={route.exposure_score > 0.5 ? 'text-amber-400' : 'text-green-400'}>{(route.exposure_score * 100).toFixed(0)}%</span></div>
+              </div>
+            </button>
+          ))}
+          <NextStepBanner text="Next: Run observation analysis on your route" targetTab="observation" />
         </div>
       )}
     </div>
   );
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 5: OBSERVATION (now independent from routes)
+   ═══════════════════════════════════════════════════════════════ */
+
 export const ObservationPanel = () => {
   const setClickMode = useUIStore((s) => s.setClickMode);
   const clickMode = useUIStore((s) => s.clickMode);
   const visibility = useMissionStore((s) => s.visibility);
   const terrainData = useMissionStore((s) => s.terrainData);
-
   const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
 
   return (
     <div className="p-4 text-text-primary">
-      <h2 className="text-xl font-bold mb-4 glow-text text-cyan-400">Vision Mode</h2>
+      <h2 className="text-lg font-bold mb-1 glow-text text-cyan-400">Observation Analysis</h2>
+      <p className="text-xs text-text-secondary mb-4">Click any point to calculate line-of-sight visibility.</p>
       
       {!terrainData ? (
         <EmptyState 
-          icon={<Map className="w-8 h-8" />}
+          icon={<Eye className="w-8 h-8" />}
           title="Terrain Required"
-          description="Please fetch a Live Area first."
-          actionLabel="Go to Upload Panel"
+          description="Fetch a mission area first."
+          actionLabel="Go to Mission Area"
           onAction={() => setActiveRightTab('upload')}
         />
       ) : (
         <>
-          <p className="text-text-secondary text-sm mb-4">Click anywhere on the map to instantly reveal hidden terrain and direct lines of sight.</p>
-          
           <button 
             onClick={() => setClickMode(clickMode === 'observer' ? 'none' : 'observer')}
-            className={`w-full py-3 mb-6 rounded font-bold transition-colors ${clickMode === 'observer' ? 'bg-bg-secondary border-2 border-accent-cyan text-accent-cyan animate-pulse' : 'bg-bg-card border-2 border-transparent hover:border-accent-cyan/50 text-text-primary'}`}
+            className={`w-full py-3 mb-4 rounded-lg font-bold text-sm transition-all ${
+              clickMode === 'observer' 
+                ? 'bg-cyan-500/15 border-2 border-cyan-500/50 text-cyan-400 shadow-[0_0_20px_rgba(0,240,255,0.15)]' 
+                : 'bg-bg-card border-2 border-slate-700/50 hover:border-cyan-500/30 text-text-primary'
+            }`}
           >
-            {clickMode === 'observer' ? 'Click on map...' : 'Enable Vision Mode'}
+            {clickMode === 'observer' ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                Click on map to analyze...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                <Eye className="w-4 h-4" />
+                Enable Vision Mode
+              </span>
+            )}
           </button>
 
           {visibility && (
-            <div className="border border-accent-cyan/30 bg-bg-card rounded p-4">
-              <h3 className="font-bold text-accent-cyan mb-2">Viewshed Results</h3>
+            <div className="border border-cyan-500/20 bg-bg-card/50 rounded-lg p-4">
+              <h3 className="font-bold text-cyan-400 mb-3 text-sm">Viewshed Results</h3>
               <div className="flex justify-between items-center mb-2 text-sm">
-                <span className="text-text-secondary">Area Coverage:</span>
-                <span className="font-mono font-bold">{visibility.coverage_pct}%</span>
+                <span className="text-text-secondary">Area Coverage</span>
+                <span className="font-mono font-bold text-cyan-400">{visibility.coverage_pct}%</span>
               </div>
-              <div className="h-2 w-full bg-bg-secondary rounded overflow-hidden">
+              <div className="h-2 w-full bg-bg-secondary rounded-full overflow-hidden mb-3">
                 <div 
-                  className="h-full bg-accent-cyan" 
+                  className="h-full bg-gradient-to-r from-cyan-500/50 to-cyan-400 rounded-full transition-all duration-500" 
                   style={{ width: `${visibility.coverage_pct}%` }}
                 />
               </div>
-              <p className="text-xs text-text-secondary mt-4">
-                Blue zones indicate direct Line-of-Sight. Dark zones are occluded by elevation or structures.
+              <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                <div className="p-2 bg-bg-secondary rounded text-center">
+                  <div className="text-cyan-400 font-bold">{visibility.visible_zones?.length || 0}</div>
+                  <div className="text-[10px] text-slate-500">Visible Cells</div>
+                </div>
+                <div className="p-2 bg-bg-secondary rounded text-center">
+                  <div className="text-slate-400 font-bold">{visibility.hidden_zones?.length || 0}</div>
+                  <div className="text-[10px] text-slate-500">Hidden Cells</div>
+                </div>
+              </div>
+              <p className="text-[10px] text-text-secondary leading-relaxed">
+                Blue zones = direct Line-of-Sight. Dark zones = occluded by elevation or structures.
               </p>
             </div>
           )}
+
+          {!visibility && (
+            <div className="p-4 bg-bg-card/30 border border-dashed border-slate-700/50 rounded-lg text-center">
+              <Eye className="w-6 h-6 text-slate-600 mx-auto mb-2" />
+              <p className="text-xs text-slate-500">No observation data yet. Enable Vision Mode and click a point.</p>
+            </div>
+          )}
+
+          <NextStepBanner text="Next: Run What-If scenarios to stress-test the mission" targetTab="whatif" />
         </>
       )}
     </div>
   );
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 6: THREATS
+   ═══════════════════════════════════════════════════════════════ */
 
 import { MissionReplay } from '../mission/MissionReplay';
 import { StrategyComparison } from '../mission/StrategyComparison';
@@ -350,17 +636,20 @@ export const ThreatPanel = () => {
   
   const threatsList = useMissionStore((s) => s.threats);
   const removeThreat = useMissionStore((s) => s.removeThreat);
+  const terrainData = useMissionStore((s) => s.terrainData);
+  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
 
   const threats = [
-    { id: 'sniper', label: 'Sniper Position', color: 'border-accent-red' },
-    { id: 'checkpoint', label: 'Enemy Checkpoint', color: 'border-accent-amber' },
-    { id: 'ied', label: 'IED Suspected', color: 'border-accent-red' },
-    { id: 'patrol', label: 'Patrol Route', color: 'border-accent-amber' }
+    { id: 'sniper', label: 'Sniper', emoji: '🎯', color: 'border-red-500/40 hover:bg-red-500/10' },
+    { id: 'checkpoint', label: 'Checkpoint', emoji: '🛡', color: 'border-amber-500/40 hover:bg-amber-500/10' },
+    { id: 'ied', label: 'IED', emoji: '💣', color: 'border-red-500/40 hover:bg-red-500/10' },
+    { id: 'patrol', label: 'Patrol', emoji: '👥', color: 'border-amber-500/40 hover:bg-amber-500/10' },
+    { id: 'enemy_outpost', label: 'Outpost', emoji: '🏴', color: 'border-red-600/40 hover:bg-red-600/10' },
+    { id: 'hostile_zone', label: 'Hostile Zone', emoji: '⛔', color: 'border-red-700/40 hover:bg-red-700/10' },
   ];
 
   const handleDelete = (id: string) => {
     removeThreat(id);
-    // In a real implementation we would also hit DELETE /threats/:id
   };
 
   const handleSelectThreat = (id: string) => {
@@ -373,86 +662,103 @@ export const ThreatPanel = () => {
     }
   };
 
-  const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
-  const terrainData = useMissionStore((s) => s.terrainData);
-
   return (
     <div className="p-4 text-text-primary flex flex-col h-full overflow-y-auto">
-      <h2 className="text-xl font-bold mb-4 glow-text text-red-400">Threat Injection</h2>
-      <p className="text-slate-400 text-sm mb-4">Select a threat type and click on the map to inject it into the simulation environment.</p>
+      <h2 className="text-lg font-bold mb-1 glow-text text-red-400">Threat Injection</h2>
+      <p className="text-slate-400 text-xs mb-4">Place threats to dynamically update the risk model.</p>
       
       {!terrainData ? (
         <EmptyState 
           icon={<Map className="w-8 h-8" />}
           title="Terrain Required"
-          description="Please fetch a Live Area first to place threats."
-          actionLabel="Go to Upload Panel"
+          description="Fetch a mission area first to place threats."
+          actionLabel="Go to Mission Area"
           onAction={() => setActiveRightTab('upload')}
         />
       ) : (
-        <div className="grid grid-cols-2 gap-3 mt-4">
-        {threats.map(t => (
-          <button 
-            key={t.id}
-            onClick={() => handleSelectThreat(t.id)}
-            className={`p-3 bg-bg-card rounded border-2 transition-colors ${activeThreat === t.id ? t.color + ' bg-bg-secondary' : 'border-transparent hover:border-bg-secondary'}`}
-          >
-            {t.label}
-          </button>
-        ))}
+        <div className="grid grid-cols-3 gap-2">
+          {threats.map(t => (
+            <button 
+              key={t.id}
+              onClick={() => handleSelectThreat(t.id)}
+              className={`p-2.5 bg-bg-card rounded-lg border-2 transition-all text-center ${
+                activeThreat === t.id 
+                  ? 'border-cyan-500/50 bg-cyan-500/10 shadow-[0_0_12px_rgba(0,240,255,0.1)]' 
+                  : `border-transparent ${t.color}`
+              }`}
+            >
+              <div className="text-lg mb-1">{t.emoji}</div>
+              <div className="text-[10px] font-bold text-slate-300">{t.label}</div>
+            </button>
+          ))}
         </div>
       )}
 
       {activeThreat && (
-        <div className="mt-6 p-4 bg-accent-red/10 border border-accent-red/30 rounded flex justify-between items-center">
-          <p className="text-accent-red text-sm font-bold animate-pulse">Click on map to place threat</p>
-          <button onClick={() => { setActiveThreat(null); setClickMode('none'); }} className="text-text-secondary hover:text-text-primary">✕</button>
+        <div className="mt-4 p-3 bg-red-500/5 border border-red-500/20 rounded-lg flex justify-between items-center">
+          <p className="text-red-400 text-xs font-bold flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+            Click on map to place threat
+          </p>
+          <button onClick={() => { setActiveThreat(null); setClickMode('none'); }} className="text-text-secondary hover:text-text-primary text-sm">✕</button>
         </div>
       )}
 
       {threatsList.length > 0 && (
-        <div className="mt-8 border-t border-bg-secondary pt-4">
-          <h3 className="font-bold text-accent-red mb-3">Active Threats on Map</h3>
-          <div className="space-y-2">
+        <div className="mt-6 border-t border-slate-700/30 pt-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-bold text-red-400 text-sm">Active Threats ({threatsList.length})</h3>
+            <button
+              onClick={() => threatsList.forEach(t => removeThreat(t.id))}
+              className="text-[10px] text-slate-500 hover:text-red-400 transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+          <div className="space-y-1.5">
             {threatsList.map(t => (
-              <div key={t.id} className="flex justify-between items-center p-3 bg-bg-card border border-accent-red/20 rounded">
+              <div key={t.id} className="flex justify-between items-center p-2.5 bg-bg-card/50 border border-red-500/10 rounded-lg">
                 <div>
-                  <div className="font-bold capitalize">{t.type.replace('_', ' ')}</div>
-                  <div className="text-xs text-text-secondary font-mono">
+                  <div className="font-bold capitalize text-xs">{t.type.replace('_', ' ')}</div>
+                  <div className="text-[10px] text-text-secondary font-mono">
                     [{t.position.lat.toFixed(4)}, {t.position.lng.toFixed(4)}]
                   </div>
                 </div>
                 <button 
                   onClick={() => handleDelete(t.id)}
-                  className="px-3 py-1 bg-accent-red/20 text-accent-red rounded hover:bg-accent-red/40 text-sm"
+                  className="px-2 py-1 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 text-[10px] font-bold transition-colors"
                 >
                   Remove
                 </button>
               </div>
             ))}
           </div>
+          <NextStepBanner text="Threats placed. Plan routes to avoid hostile zones." targetTab="routes" />
         </div>
       )}
       
       {terrainData && threatsList.length === 0 && !activeThreat && (
-        <div className="mt-8 border-t border-slate-700/50 pt-6">
+        <div className="mt-6 border-t border-slate-700/30 pt-4">
           <EmptyState 
             icon={<Shield className="w-6 h-6" />}
-            title="No Threats Found"
+            title="No Threats Placed"
             description="Add enemy positions above to simulate hostile terrain."
           />
+          <NextStepBanner text="Skip threats and plan routes directly" targetTab="routes" />
         </div>
       )}
     </div>
   );
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 7: WHAT-IF SCENARIOS
+   ═══════════════════════════════════════════════════════════════ */
+
 export const WhatIfPanel = () => {
   const [isSimulating, setIsSimulating] = React.useState(false);
   const [result, setResult] = React.useState<any>(null);
   const terrainData = useMissionStore((s) => s.terrainData);
-
-  const [scenarioType, setScenarioType] = React.useState('Main Route Blocked');
 
   const runSimulation = async (type: string) => {
     setIsSimulating(true);
@@ -460,7 +766,7 @@ export const WhatIfPanel = () => {
     try {
       const response = await api.post('/whatif/simulate', { 
         scenario_type: type,
-        params: { terrain_id: terrainData?.analysis?.id }
+        params: { terrain_id: terrainData?.id }
       });
       setResult(response.data);
     } catch (error) {
@@ -471,60 +777,67 @@ export const WhatIfPanel = () => {
   };
 
   const scenarios = [
-    { label: 'Main Route Blocked', type: 'Main Route Blocked', color: 'border-accent-red' },
-    { label: 'Weather Deterioration', type: 'Weather Deterioration (Fog)', color: 'border-accent-cyan' },
-    { label: 'Unexpected Threat', type: 'Unexpected Threat Encounter', color: 'border-accent-amber' },
-    { label: 'Comms Jamming', type: 'Comms Jamming', color: 'border-text-secondary' },
+    { label: 'Route Blocked', type: 'Main Route Blocked', emoji: '🚧' },
+    { label: 'Bad Weather', type: 'Weather Deterioration (Fog)', emoji: '🌫' },
+    { label: 'New Threat', type: 'Unexpected Threat Encounter', emoji: '⚠️' },
+    { label: 'Comms Jammed', type: 'Comms Jamming', emoji: '📡' },
   ];
 
   return (
     <div className="p-4 text-text-primary flex flex-col h-full overflow-y-auto">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-amber">What-If Scenarios</h2>
-      <p className="text-text-secondary text-sm mb-4">Click a scenario below to instantly simulate its impact on the mission.</p>
+      <h2 className="text-lg font-bold mb-1 glow-text text-accent-amber">What-If Scenarios</h2>
+      <p className="text-text-secondary text-xs mb-4">Simulate unexpected events and measure impact.</p>
       
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-2 mb-4">
         {scenarios.map(s => (
           <button 
             key={s.type}
             onClick={() => runSimulation(s.type)}
             disabled={isSimulating}
-            className={`p-3 bg-bg-card rounded border border-bg-secondary hover:${s.color} hover:bg-bg-secondary transition-colors text-sm font-bold disabled:opacity-50 text-left`}
+            className="p-3 bg-bg-card/50 rounded-lg border border-slate-700/50 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all text-left disabled:opacity-50"
           >
-            {s.label}
+            <div className="text-lg mb-1">{s.emoji}</div>
+            <div className="text-xs font-bold text-slate-300">{s.label}</div>
           </button>
         ))}
       </div>
 
       {isSimulating && (
-        <div className="text-center text-accent-amber animate-pulse mb-6 text-sm">
+        <div className="text-center text-accent-amber animate-pulse mb-4 text-sm flex items-center justify-center gap-2">
+          <span className="w-4 h-4 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
           Running scenario analysis...
         </div>
       )}
 
       {result && (
-        <div className="mt-6 border border-accent-amber/30 rounded p-4 bg-bg-card">
-          <h3 className="font-bold text-accent-amber mb-2">Simulation Results</h3>
-          <div className="text-sm text-text-secondary mb-4 space-y-1">
+        <div className="border border-amber-500/20 rounded-lg p-4 bg-amber-500/5 mb-4">
+          <h3 className="font-bold text-accent-amber mb-2 text-sm">Impact Assessment</h3>
+          <div className="text-xs text-text-secondary mb-3 space-y-1">
             {result.changes.map((change: string, idx: number) => (
-              <p key={idx}>• {change}</p>
+              <p key={idx} className="flex items-start gap-2">
+                <span className="text-amber-400 mt-0.5">›</span>
+                {change}
+              </p>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="bg-bg-primary p-2 rounded">
-              <div className="text-text-secondary text-xs">Risk Change</div>
-              <div className="text-accent-red font-bold">
-                +{(result.after_metrics.avg_risk - result.before_metrics.avg_risk).toFixed(2)}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-bg-primary/50 p-2 rounded text-center">
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Risk Change</div>
+              <div className="text-accent-red font-bold font-mono">
+                +{((result.after_metrics.avg_risk - result.before_metrics.avg_risk) * 100).toFixed(0)}%
               </div>
             </div>
-            <div className="bg-bg-primary p-2 rounded">
-              <div className="text-text-secondary text-xs">Impact</div>
-              <div className="text-accent-amber font-bold">Severe</div>
+            <div className="bg-bg-primary/50 p-2 rounded text-center">
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Severity</div>
+              <div className="text-accent-amber font-bold">
+                {result.after_metrics.avg_risk > 0.6 ? 'CRITICAL' : result.after_metrics.avg_risk > 0.4 ? 'SEVERE' : 'MODERATE'}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-8 border-t border-bg-secondary pt-4">
+      <div className="mt-auto border-t border-slate-700/30 pt-4">
         <MissionReplay />
       </div>
       <div className="mt-4">
@@ -534,15 +847,25 @@ export const WhatIfPanel = () => {
   );
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   PANEL 8: AI ASSISTANT
+   ═══════════════════════════════════════════════════════════════ */
+
 export const AIAssistantPanel = () => {
   const [query, setQuery] = React.useState('');
   const [isThinking, setIsThinking] = React.useState(false);
+  const chatEndRef = React.useRef<HTMLDivElement>(null);
   const [chatHistory, setChatHistory] = React.useState<Array<{role: string, content: string}>>([
-    { role: 'system', content: 'How can I assist with your mission planning?' }
+    { role: 'system', content: 'Tactical AI online. How can I assist with your mission planning?' }
   ]);
   const terrainData = useMissionStore((s) => s.terrainData);
   const threats = useMissionStore((s) => s.threats);
   const routes = useMissionStore((s) => s.routes);
+
+  // Auto-scroll
+  React.useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory, isThinking]);
 
   const handleSend = async () => {
     if (!query.trim()) return;
@@ -563,9 +886,6 @@ export const AIAssistantPanel = () => {
       });
       
       setChatHistory(prev => [...prev, { role: 'system', content: response.data.response }]);
-      
-      // If there are actions, we could theoretically execute them here
-      // e.g. if action.type === 'plan_route', trigger route planning
     } catch (e) {
       console.error(e);
       setChatHistory(prev => [...prev, { role: 'system', content: 'Error communicating with AI Assistant.' }]);
@@ -574,36 +894,76 @@ export const AIAssistantPanel = () => {
     }
   };
 
+  const quickActions = ['Find safest route', 'Show high-risk zones', 'Compare routes', 'Tactical summary'];
+
   return (
     <div className="p-4 text-text-primary flex flex-col h-full">
-      <h2 className="text-xl font-bold mb-4 glow-text text-accent-cyan">AI Tactical Assistant</h2>
+      <h2 className="text-lg font-bold mb-1 glow-text text-accent-cyan">AI Tactical Assistant</h2>
+      <p className="text-xs text-text-secondary mb-3">Mission-aware tactical intelligence.</p>
+
+      {/* Context badge */}
+      <div className="flex gap-2 mb-3 flex-wrap">
+        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${terrainData ? 'border-green-500/30 text-green-400 bg-green-500/10' : 'border-slate-700 text-slate-500'}`}>
+          {terrainData ? '✓ Terrain' : '○ No Terrain'}
+        </span>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${threats.length > 0 ? 'border-red-500/30 text-red-400 bg-red-500/10' : 'border-slate-700 text-slate-500'}`}>
+          {threats.length > 0 ? `✓ ${threats.length} Threats` : '○ No Threats'}
+        </span>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${routes.length > 0 ? 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10' : 'border-slate-700 text-slate-500'}`}>
+          {routes.length > 0 ? `✓ ${routes.length} Routes` : '○ No Routes'}
+        </span>
+      </div>
       
-      <div className="flex-1 border border-bg-secondary rounded p-4 mb-4 bg-bg-card/50 overflow-y-auto space-y-3 flex flex-col">
+      {/* Chat */}
+      <div className="flex-1 border border-slate-700/50 rounded-lg p-3 mb-3 bg-bg-card/30 overflow-y-auto space-y-2 flex flex-col min-h-0">
         {chatHistory.map((msg, i) => (
-          <div key={i} className={`p-2 rounded max-w-[85%] ${msg.role === 'user' ? 'bg-bg-secondary ml-auto border border-text-secondary/20' : 'bg-accent-cyan/10 border border-accent-cyan/30 mr-auto text-accent-cyan'}`}>
-            <p className="text-sm">{msg.content}</p>
+          <div key={i} className={`p-2.5 rounded-lg max-w-[85%] text-xs leading-relaxed ${
+            msg.role === 'user' 
+              ? 'bg-slate-800/80 ml-auto border border-slate-700/50 text-slate-200' 
+              : 'bg-cyan-500/5 border border-cyan-500/20 mr-auto text-cyan-100'
+          }`}>
+            {msg.content}
           </div>
         ))}
         {isThinking && (
-          <div className="p-2 rounded max-w-[85%] bg-accent-cyan/10 border border-accent-cyan/30 mr-auto text-accent-cyan">
-            <p className="text-sm animate-pulse">Thinking...</p>
+          <div className="p-2.5 rounded-lg max-w-[85%] bg-cyan-500/5 border border-cyan-500/20 mr-auto">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
           </div>
         )}
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex gap-1.5 mb-3 flex-wrap">
+        {quickActions.map(action => (
+          <button
+            key={action}
+            onClick={() => { setQuery(action); }}
+            className="text-[10px] px-2.5 py-1 rounded-full border border-cyan-500/20 text-cyan-400/70 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
+          >
+            {action}
+          </button>
+        ))}
       </div>
       
+      {/* Input */}
       <div className="flex gap-2">
         <input 
           type="text" 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          className="flex-1 bg-bg-secondary border border-bg-card rounded p-2 text-text-primary outline-none focus:border-accent-cyan" 
-          placeholder="Ask AI..." 
+          className="flex-1 bg-bg-secondary border border-slate-700/50 rounded-lg p-2.5 text-text-primary text-xs outline-none focus:border-cyan-500/50 transition-colors" 
+          placeholder="Ask the AI..." 
         />
         <button 
           onClick={handleSend}
           disabled={!query.trim() || isThinking}
-          className="px-4 py-2 bg-accent-cyan text-bg-primary font-bold rounded disabled:opacity-50"
+          className="px-4 py-2.5 bg-cyan-500/15 text-cyan-400 font-bold rounded-lg disabled:opacity-30 hover:bg-cyan-500/25 transition-colors border border-cyan-500/30 text-xs"
         >
           Send
         </button>

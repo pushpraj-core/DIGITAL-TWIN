@@ -64,8 +64,10 @@ export default function MissionGuide() {
     }
   };
 
+  const rightPanelOpen = useUIStore((s) => s.rightPanelOpen);
+
   return (
-    <div className="absolute bottom-6 right-[400px] z-[2000] pointer-events-none">
+    <div className={`absolute bottom-6 z-[2000] pointer-events-none transition-all duration-300 ${rightPanelOpen ? 'right-[420px]' : 'right-24'}`}>
       <AnimatePresence>
         {expanded && (
           <motion.div

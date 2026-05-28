@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  Upload,
+  Globe,
   Map,
   Shield,
   Route,
@@ -11,6 +11,7 @@ import {
   Bot,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import { useUIStore } from '../../stores/uiStore';
 import { useMissionStore } from '../../stores/missionStore';
@@ -21,17 +22,19 @@ interface NavItem {
   icon: React.ReactNode;
   label: string;
   description: string;
-  reqStage: number; // minimum missionStage to fully unlock
+  reqStage: number;
 }
 
+// Reordered to match the correct user flow:
+// Area → Terrain → Risk → Threats → Observation → Routes → What-If → AI
 const navItems: NavItem[] = [
-  { id: 'upload', icon: <Upload className="w-5 h-5" />, label: 'Environment', description: 'Fetch satellite imagery and elevation data.', reqStage: 0 },
-  { id: 'terrain', icon: <Map className="w-5 h-5" />, label: 'Terrain Analysis', description: 'Review terrain passability and elevation.', reqStage: 1 },
-  { id: 'risk', icon: <Shield className="w-5 h-5" />, label: 'Risk Heatmap', description: 'View danger zones based on terrain and weather.', reqStage: 1 },
-  { id: 'threats', icon: <Crosshair className="w-5 h-5" />, label: 'Threats', description: 'Inject enemy positions to update risk models.', reqStage: 1 },
-  { id: 'routes', icon: <Route className="w-5 h-5" />, label: 'Routes', description: 'Plan paths avoiding threats and hazards.', reqStage: 2 },
-  { id: 'observation', icon: <Eye className="w-5 h-5" />, label: 'Vision Mode', description: 'Check direct lines of sight on the map.', reqStage: 3 },
-  { id: 'whatif', icon: <GitBranch className="w-5 h-5" />, label: 'What-If Scenarios', description: 'Simulate unexpected mission events.', reqStage: 4 },
+  { id: 'upload', icon: <Globe className="w-5 h-5" />, label: 'Mission Area', description: 'Select a region and fetch live terrain data.', reqStage: 0 },
+  { id: 'terrain', icon: <Map className="w-5 h-5" />, label: 'Terrain Intel', description: 'Review terrain analysis and passability.', reqStage: 1 },
+  { id: 'risk', icon: <Shield className="w-5 h-5" />, label: 'Risk Heatmap', description: 'View danger zones from terrain and weather.', reqStage: 1 },
+  { id: 'threats', icon: <Crosshair className="w-5 h-5" />, label: 'Threats', description: 'Inject enemy positions to update risk.', reqStage: 1 },
+  { id: 'observation', icon: <Eye className="w-5 h-5" />, label: 'Observation', description: 'Analyze line of sight from any point.', reqStage: 1 },
+  { id: 'routes', icon: <Route className="w-5 h-5" />, label: 'Movement', description: 'Plan routes avoiding threats and hazards.', reqStage: 1 },
+  { id: 'whatif', icon: <GitBranch className="w-5 h-5" />, label: 'What-If', description: 'Simulate unexpected mission events.', reqStage: 1 },
   { id: 'assistant', icon: <Bot className="w-5 h-5" />, label: 'AI Assistant', description: 'Ask for tactical advice.', reqStage: 0 },
 ];
 
@@ -62,6 +65,7 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const isActive = activeRightTab === item.id;
           const isLocked = missionStage < item.reqStage;
+          const wasJustUnlocked = missionStage === item.reqStage && item.reqStage > 0;
           
           return (
             <Tooltip 
@@ -82,10 +86,11 @@ export default function Sidebar() {
                     isActive
                       ? 'bg-cyan-500/15 text-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.15)]'
                       : isLocked 
-                        ? 'text-slate-700 hover:text-slate-600'
+                        ? 'text-slate-700 hover:text-slate-600 cursor-not-allowed'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/30'
                   }
                 `}
+                disabled={isLocked}
               >
                 {item.icon}
                 {/* Active indicator bar */}
@@ -96,11 +101,22 @@ export default function Sidebar() {
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
+                {/* "NEW" pulse dot for just-unlocked items */}
+                {wasJustUnlocked && !isActive && (
+                  <motion.div
+                    animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.8)]"
+                  />
+                )}
               </motion.button>
             </Tooltip>
           );
         })}
       </div>
+
+      {/* Divider */}
+      <div className="w-8 h-px bg-slate-700/40 my-2" />
 
       {/* Collapse toggle */}
       <button

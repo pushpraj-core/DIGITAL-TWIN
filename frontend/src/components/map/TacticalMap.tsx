@@ -190,8 +190,37 @@ export default function TacticalMap() {
 
 
   const isLayerVisible = (id: string) => layers.find((l) => l.id === id)?.visible ?? false;
+  const terrainData = useMissionStore((s) => s.terrainData);
+  const isFetching = useMissionStore((s) => s.isFetchingTerrain);
+  const clickMode = useUIStore((s) => s.clickMode);
 
   return (
+    <div className="w-full h-full relative">
+      {/* Empty state overlay when no terrain is loaded */}
+      {!terrainData && !isFetching && (
+        <div className="absolute inset-0 z-[800] pointer-events-none flex items-center justify-center">
+          <div className="text-center pointer-events-none">
+            <div className="bg-slate-900/70 backdrop-blur-sm border border-cyan-500/20 rounded-xl px-8 py-6 shadow-[0_0_40px_rgba(0,240,255,0.08)]">
+              <div className="w-10 h-10 mx-auto mb-3 rounded-full border-2 border-cyan-500/30 flex items-center justify-center">
+                <span className="text-cyan-400 text-lg">⊕</span>
+              </div>
+              <h3 className="text-cyan-400 font-bold text-sm mb-1">Click to Select Mission Area</h3>
+              <p className="text-slate-500 text-xs max-w-[220px]">Click anywhere on the map to define a ~3km tactical area</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fetching terrain spinner overlay */}
+      {isFetching && (
+        <div className="absolute inset-0 z-[900] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin" />
+            <p className="text-cyan-400 font-bold text-sm animate-pulse">Downloading Mission Area...</p>
+            <p className="text-slate-500 text-xs mt-1">Fetching satellite, terrain, and elevation data</p>
+          </div>
+        </div>
+      )}
     <MapContainer
       center={[center.lat, center.lng]}
       zoom={zoom}
@@ -301,5 +330,6 @@ export default function TacticalMap() {
         </>
       )}
     </MapContainer>
+    </div>
   );
 }
