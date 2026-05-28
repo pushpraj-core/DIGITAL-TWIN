@@ -444,3 +444,45 @@ body {
   font-family: var(--font-mono) !important;
   font-size: 10px !important;
 }
+
+/* ── Processing Overlay Animations ──────────────────────────── */
+.processing-scanlines {
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(0, 240, 255, 0.05) 50%,
+    rgba(0, 240, 255, 0.05)
+  );
+  background-size: 100% 4px;
+  animation: scanlinesMove 10s linear infinite;
+}
+
+@keyframes scanlinesMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
+}
+
+.processing-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerMove 2s infinite linear;
+}
+
+@keyframes shimmerMove {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.processing-steps-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.processing-steps-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.2);
+  border-radius: 2px;
+}

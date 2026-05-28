@@ -4,6 +4,8 @@ import api from '../../services/api';
 import { useMissionStore } from '../../stores/missionStore';
 import TopBar from './TopBar';
 import Sidebar from './Sidebar';
+import MissionGuide from './MissionGuide';
+import ProcessingOverlay from './ProcessingOverlay';
 import BottomTimeline from './BottomTimeline';
 import TacticalMap from '../map/TacticalMap';
 import MapControls from '../map/MapControls';
@@ -137,6 +139,7 @@ export default function AppShell() {
       </div>
 
       {/* UX Overlays */}
+      <ProcessingOverlay />
       <MissionGuide />
       <OnboardingTour />
     </div>
