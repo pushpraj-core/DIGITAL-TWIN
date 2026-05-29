@@ -258,6 +258,15 @@ export default function TacticalMap() {
         pane="overlayPane"
       />
 
+      {/* Hillshade layer — adds depth to terrain when terrain is loaded */}
+      {terrainData && isLayerVisible('terrain') && (
+        <TileLayer
+          url="https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png"
+          opacity={0.25}
+          maxZoom={18}
+        />
+      )}
+
       <MapEventHandler />
       <MapBridge />
 
