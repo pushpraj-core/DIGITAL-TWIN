@@ -25,6 +25,22 @@ const endIcon = L.divIcon({
   iconSize: [28, 28],
   iconAnchor: [14, 14],
 });
+// Bridge: registers map controls into the store so external components can call them
+function MapBridge() {
+  const map = useMap();
+  const registerMapCallbacks = useMapStore((s) => s.registerMapCallbacks);
+  const center = useMapStore((s) => s.center);
+
+  useEffect(() => {
+    registerMapCallbacks({
+      zoomIn: () => map.zoomIn(),
+      zoomOut: () => map.zoomOut(),
+      recenter: () => map.setView([center.lat, center.lng], 13, { animate: true }),
+    });
+  }, [map, center, registerMapCallbacks]);
+
+  return null;
+}
 
 function MapEventHandler() {
   const map = useMap();
@@ -243,6 +259,7 @@ export default function TacticalMap() {
       />
 
       <MapEventHandler />
+      <MapBridge />
 
       {bounds && !useMapStore.getState().autoSync && (
         <Rectangle

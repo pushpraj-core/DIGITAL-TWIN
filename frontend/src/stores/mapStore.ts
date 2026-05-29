@@ -13,6 +13,11 @@ interface MapState {
   bounds: { min_lat: number; max_lat: number; min_lng: number; max_lng: number } | null;
   autoSync: boolean;
 
+  // Map control callbacks (set by MapBridge inside MapContainer)
+  mapZoomIn: (() => void) | null;
+  mapZoomOut: (() => void) | null;
+  mapRecenter: (() => void) | null;
+
   setCenter: (center: LatLng) => void;
   setZoom: (zoom: number) => void;
   toggleLayer: (layerId: string) => void;
@@ -25,6 +30,7 @@ interface MapState {
   setBounds: (bounds: { min_lat: number; max_lat: number; min_lng: number; max_lng: number }) => void;
   setAutoSync: (val: boolean) => void;
   resetPoints: () => void;
+  registerMapCallbacks: (callbacks: { zoomIn: () => void; zoomOut: () => void; recenter: () => void }) => void;
 }
 
 const defaultLayers: MapLayer[] = [
@@ -47,6 +53,9 @@ export const useMapStore = create<MapState>((set) => ({
   coordinateFormat: 'decimal',
   bounds: null,
   autoSync: true,
+  mapZoomIn: null,
+  mapZoomOut: null,
+  mapRecenter: null,
 
   setCenter: (center) => set({ center }),
   setZoom: (zoom) => set({ zoom }),
@@ -73,4 +82,9 @@ export const useMapStore = create<MapState>((set) => ({
   setBounds: (bounds) => set({ bounds }),
   setAutoSync: (val) => set({ autoSync: val }),
   resetPoints: () => set({ startPoint: null, endPoint: null, selectedPoint: null }),
+  registerMapCallbacks: (callbacks) => set({
+    mapZoomIn: callbacks.zoomIn,
+    mapZoomOut: callbacks.zoomOut,
+    mapRecenter: callbacks.recenter,
+  }),
 }));

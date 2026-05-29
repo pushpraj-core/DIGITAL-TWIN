@@ -114,9 +114,18 @@ export function MapControlsInner() {
 }
 
 // Exported as standalone floating panel (renders outside MapContainer)
+// Since we're outside MapContainer, we can't use useMap() directly.
+// Instead we dispatch events to the map via the store.
 export default function MapControls() {
   const mousePosition = useMapStore((s) => s.mousePosition);
   const coordinateFormat = useMapStore((s) => s.coordinateFormat);
+  const setCoordinateFormat = useMapStore((s) => s.setCoordinateFormat);
+  const toggleLayer = useMapStore((s) => s.toggleLayer);
+  const layers = useMapStore((s) => s.layers);
+  const gridVisible = layers.find((l) => l.id === 'grid')?.visible ?? false;
+  const mapZoomIn = useMapStore((s) => s.mapZoomIn);
+  const mapZoomOut = useMapStore((s) => s.mapZoomOut);
+  const mapRecenter = useMapStore((s) => s.mapRecenter);
 
   return (
     <motion.div
@@ -124,12 +133,63 @@ export default function MapControls() {
       animate={{ opacity: 1, x: 0 }}
       className="absolute top-4 right-4 z-[1000] flex flex-col gap-1.5"
     >
+      <Tooltip title="Zoom In" position="left" delay={500}>
+        <button
+          onClick={() => mapZoomIn?.()}
+          className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+      </Tooltip>
+      <Tooltip title="Zoom Out" position="left" delay={500}>
+        <button
+          onClick={() => mapZoomOut?.()}
+          className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+      </Tooltip>
+
+      <div className="h-px bg-slate-700/40 mx-1" />
+
+      <Tooltip title="Recenter Map" position="left" delay={500}>
+        <button
+          onClick={() => mapRecenter?.()}
+          className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+        >
+          <Locate className="w-4 h-4" />
+        </button>
+      </Tooltip>
+
+      <Tooltip title="Toggle Grid" position="left" delay={500}>
+        <button
+          onClick={() => toggleLayer('grid')}
+          className={`w-8 h-8 rounded-md flex items-center justify-center border transition-all cursor-pointer ${
+            gridVisible
+              ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400'
+              : 'bg-slate-800/80 border-cyan-500/20 text-slate-400 hover:text-cyan-400'
+          }`}
+        >
+          <Grid3x3 className="w-4 h-4" />
+        </button>
+      </Tooltip>
+
+      <Tooltip title={`Format: ${coordinateFormat.toUpperCase()}`} position="left" delay={500}>
+        <button
+          onClick={() => setCoordinateFormat(coordinateFormat === 'decimal' ? 'dms' : 'decimal')}
+          className="w-8 h-8 rounded-md flex items-center justify-center bg-slate-800/80 border border-cyan-500/20 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40 transition-all cursor-pointer"
+        >
+          <Navigation className="w-4 h-4" />
+        </button>
+      </Tooltip>
+
       {/* Mouse position display */}
       {mousePosition && (
-        <div className="px-2 py-1 rounded bg-slate-900/80 border border-cyan-500/10 text-[10px] font-mono text-cyan-400/70 whitespace-nowrap text-center">
+        <div className="mt-1 px-2 py-1 rounded bg-slate-900/80 border border-cyan-500/10 text-[10px] font-mono text-cyan-400/70 whitespace-nowrap text-center">
           {formatCoordinates(mousePosition.lat, mousePosition.lng, coordinateFormat)}
         </div>
       )}
     </motion.div>
   );
 }
+
