@@ -83,14 +83,16 @@ function MapEventHandler() {
           const runVisibility = async () => {
             const terrainData = useMissionStore.getState().terrainData;
             if (!terrainData) return;
+            // Read observation params from ObservationPanel sliders
+            const obsParams = (window as any).__obsParams || {};
             try {
               const res = await api.post('/observation/visibility', {
                 terrain_id: terrainData.id,
                 observer_lat: point.lat,
                 observer_lng: point.lng,
-                range_m: 500,
-                angle_deg: 90,
-                direction_deg: 0 // In a full app, this would be draggable
+                range_m: obsParams.range || 500,
+                angle_deg: obsParams.fov || 90,
+                direction_deg: obsParams.direction || 0,
               });
               useMissionStore.getState().setVisibility(res.data);
             } catch (e) {
@@ -98,7 +100,7 @@ function MapEventHandler() {
             }
           };
           runVisibility();
-          setClickMode('none');
+          // Don't reset click mode — allow repeated observer clicks
           break;
         case 'area': {
           // Calculate a fixed 2km x 2km bounding box around the click

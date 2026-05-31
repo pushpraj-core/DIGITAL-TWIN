@@ -543,10 +543,26 @@ export const ObservationPanel = () => {
   const terrainData = useMissionStore((s) => s.terrainData);
   const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
 
+  // Observation parameters stored in local state
+  const [obsRange, setObsRange] = React.useState(500);
+  const [obsDirection, setObsDirection] = React.useState(0);
+  const [obsFOV, setObsFOV] = React.useState(90);
+
+  // Store observation params in window so TacticalMap's click handler can read them
+  React.useEffect(() => {
+    (window as any).__obsParams = { range: obsRange, direction: obsDirection, fov: obsFOV };
+  }, [obsRange, obsDirection, obsFOV]);
+
+  // Cardinal direction label
+  const directionLabel = (deg: number) => {
+    const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    return dirs[Math.round(deg / 45) % 8];
+  };
+
   return (
     <div className="p-4 text-text-primary">
       <h2 className="text-lg font-bold mb-1 glow-text text-cyan-400">Observation Analysis</h2>
-      <p className="text-xs text-text-secondary mb-4">Click any point to calculate line-of-sight visibility.</p>
+      <p className="text-xs text-text-secondary mb-4">Configure viewshed parameters and click any point.</p>
       
       {!terrainData ? (
         <EmptyState 
@@ -558,6 +574,60 @@ export const ObservationPanel = () => {
         />
       ) : (
         <>
+          {/* Observation Parameters */}
+          <div className="space-y-3 mb-4 p-3 bg-bg-card/50 rounded-lg border border-slate-700/50">
+            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Viewshed Parameters</div>
+            
+            {/* Range Slider */}
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-[10px] text-slate-400">Range</span>
+                <span className="text-[10px] font-mono text-cyan-400">{obsRange}m</span>
+              </div>
+              <input
+                type="range" min={200} max={1500} step={50}
+                value={obsRange} onChange={e => setObsRange(Number(e.target.value))}
+                className="w-full h-1 accent-cyan-500 cursor-pointer"
+              />
+            </div>
+
+            {/* Direction Slider with compass */}
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-[10px] text-slate-400">Direction</span>
+                <span className="text-[10px] font-mono text-cyan-400">{obsDirection}° ({directionLabel(obsDirection)})</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range" min={0} max={359} step={5}
+                  value={obsDirection} onChange={e => setObsDirection(Number(e.target.value))}
+                  className="flex-1 h-1 accent-cyan-500 cursor-pointer"
+                />
+                {/* Mini compass */}
+                <div className="w-8 h-8 rounded-full border border-cyan-500/30 bg-slate-800/60 flex items-center justify-center relative flex-shrink-0">
+                  <div
+                    className="w-0.5 h-3 bg-cyan-400 rounded-full absolute origin-bottom"
+                    style={{ transform: `rotate(${obsDirection}deg)`, bottom: '50%' }}
+                  />
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 absolute" />
+                </div>
+              </div>
+            </div>
+
+            {/* FOV Slider */}
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-[10px] text-slate-400">Field of View</span>
+                <span className="text-[10px] font-mono text-cyan-400">{obsFOV}°</span>
+              </div>
+              <input
+                type="range" min={30} max={360} step={10}
+                value={obsFOV} onChange={e => setObsFOV(Number(e.target.value))}
+                className="w-full h-1 accent-cyan-500 cursor-pointer"
+              />
+            </div>
+          </div>
+
           <button 
             onClick={() => setClickMode(clickMode === 'observer' ? 'none' : 'observer')}
             className={`w-full py-3 mb-4 rounded-lg font-bold text-sm transition-all ${
