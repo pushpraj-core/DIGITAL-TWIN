@@ -899,6 +899,10 @@ export const WhatIfPanel = () => {
     { label: 'Bad Weather', type: 'Weather Deterioration (Fog)', emoji: '🌫' },
     { label: 'New Threat', type: 'Unexpected Threat Encounter', emoji: '⚠️' },
     { label: 'Comms Jammed', type: 'Comms Jamming', emoji: '📡' },
+    { label: 'Night Ops', type: 'Night Operations', emoji: '🌙' },
+    { label: 'Reinforcements', type: 'Reinforcements Arriving', emoji: '🚁' },
+    { label: 'Bridge Down', type: 'Bridge Destroyed', emoji: '🌉' },
+    { label: 'Civilians', type: 'Civilian Presence', emoji: '👥' },
   ];
 
   return (
@@ -930,24 +934,30 @@ export const WhatIfPanel = () => {
       {result && (
         <div className="border border-amber-500/20 rounded-lg p-4 bg-amber-500/5 mb-4">
           <h3 className="font-bold text-accent-amber mb-2 text-sm">Impact Assessment</h3>
-          <div className="text-xs text-text-secondary mb-3 space-y-1">
+          <div className="text-xs text-text-secondary mb-3 space-y-1.5">
             {result.changes.map((change: string, idx: number) => (
-              <p key={idx} className="flex items-start gap-2">
-                <span className="text-amber-400 mt-0.5">›</span>
+              <p key={idx} className={`flex items-start gap-2 ${change.startsWith('⚡') ? 'text-cyan-400 font-bold' : ''}`}>
+                <span className="text-amber-400 mt-0.5 flex-shrink-0">›</span>
                 {change}
               </p>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <div className="bg-bg-primary/50 p-2 rounded text-center">
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Risk Change</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Risk Δ</div>
               <div className="text-accent-red font-bold font-mono">
                 +{((result.after_metrics.avg_risk - result.before_metrics.avg_risk) * 100).toFixed(0)}%
               </div>
             </div>
             <div className="bg-bg-primary/50 p-2 rounded text-center">
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Time Δ</div>
+              <div className="text-amber-400 font-bold font-mono">
+                {result.after_metrics.time_delay_s > 0 ? `+${Math.round(result.after_metrics.time_delay_s / 60)}min` : '—'}
+              </div>
+            </div>
+            <div className="bg-bg-primary/50 p-2 rounded text-center">
               <div className="text-[10px] text-slate-500 uppercase tracking-wider">Severity</div>
-              <div className="text-accent-amber font-bold">
+              <div className={`font-bold ${result.after_metrics.avg_risk > 0.6 ? 'text-red-400' : result.after_metrics.avg_risk > 0.4 ? 'text-amber-400' : 'text-emerald-400'}`}>
                 {result.after_metrics.avg_risk > 0.6 ? 'CRITICAL' : result.after_metrics.avg_risk > 0.4 ? 'SEVERE' : 'MODERATE'}
               </div>
             </div>
