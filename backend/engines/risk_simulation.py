@@ -210,6 +210,19 @@ class RiskSimulationEngine:
         danger = np.clip(danger / 8.0, 0.0, 1.0)  # max 8 neighbours
         return danger
 
+    # Threat type intensity multipliers and falloff exponents
+    _THREAT_PROFILES: dict[str, dict] = {
+        "sniper":        {"intensity": 1.0,  "falloff": 1.5, "core_pct": 0.3},
+        "checkpoint":    {"intensity": 0.7,  "falloff": 2.0, "core_pct": 0.5},
+        "ied":           {"intensity": 0.95, "falloff": 3.0, "core_pct": 0.15},
+        "patrol":        {"intensity": 0.6,  "falloff": 1.2, "core_pct": 0.4},
+        "enemy_outpost": {"intensity": 0.85, "falloff": 1.8, "core_pct": 0.35},
+        "hostile_zone":  {"intensity": 0.9,  "falloff": 1.0, "core_pct": 0.6},
+        "tower":         {"intensity": 0.75, "falloff": 1.5, "core_pct": 0.25},
+        "blocked_road":  {"intensity": 0.5,  "falloff": 2.5, "core_pct": 0.2},
+        "danger_zone":   {"intensity": 0.8,  "falloff": 1.5, "core_pct": 0.4},
+    }
+
     @staticmethod
     def _threat_proximity(
         rows: int,
@@ -217,7 +230,7 @@ class RiskSimulationEngine:
         threats: Sequence[dict],
         bounds: dict[str, float],
     ) -> np.ndarray:
-        """Inverse-square influence from each threat."""
+        """Inverse-falloff influence from each threat, modulated by threat type."""
         prox = np.zeros((rows, cols), dtype=np.float32)
         if not threats:
             return prox
@@ -229,24 +242,49 @@ class RiskSimulationEngine:
             t_lat = threat.get("lat", 0)
             t_lng = threat.get("lng", 0)
             t_radius = max(threat.get("radius", 100), 1.0)
+            t_type = threat.get("type", "danger_zone")
+
+            # Look up threat profile
+            profile = RiskSimulationEngine._THREAT_PROFILES.get(
+                t_type, {"intensity": 0.7, "falloff": 1.5, "core_pct": 0.4}
+            )
+            intensity = profile["intensity"]
+            falloff_exp = profile["falloff"]
+            core_pct = profile["core_pct"]
 
             # Threat position in grid space
             t_row = (bounds["max_lat"] - t_lat) / max(lat_range, 1e-9) * (rows - 1)
             t_col = (t_lng - bounds["min_lng"]) / max(lng_range, 1e-9) * (cols - 1)
 
             # Radius in grid cells (approximate)
-            cell_size_m = (lat_range * 111_000) / max(rows, 1)  # rough m/cell
+            cell_size_m = (lat_range * 111_000) / max(rows, 1)
             radius_cells = t_radius / max(cell_size_m, 1.0)
 
             # Build distance array
             rr, cc = np.mgrid[0:rows, 0:cols]
             dist = np.sqrt((rr - t_row) ** 2 + (cc - t_col) ** 2)
-            influence = np.clip(1.0 - (dist / max(radius_cells, 1.0)), 0.0, 1.0)
-            # Inverse-square falloff for cells outside the core radius
+
+            # Core zone: full intensity within core_pct of radius
+            core_cells = radius_cells * core_pct
+            influence = np.zeros_like(dist)
+
+            # Inside core: full intensity
+            core_mask = dist <= core_cells
+            influence[core_mask] = intensity
+
+            # Between core and radius: smooth falloff
+            mid_mask = (dist > core_cells) & (dist <= radius_cells)
+            if mid_mask.any():
+                norm_dist = (dist[mid_mask] - core_cells) / max(radius_cells - core_cells, 1e-9)
+                influence[mid_mask] = intensity * np.clip(1.0 - norm_dist ** falloff_exp, 0.0, 1.0)
+
+            # Beyond radius: rapid inverse-square decay
             far = dist > radius_cells
-            influence[far] = np.clip(
-                (radius_cells / (dist[far] + 1e-9)) ** 2, 0.0, 1.0
-            )
+            if far.any():
+                influence[far] = np.clip(
+                    intensity * (radius_cells / (dist[far] + 1e-9)) ** 2, 0.0, 1.0
+                )
+
             prox = np.maximum(prox, influence)
 
         return prox

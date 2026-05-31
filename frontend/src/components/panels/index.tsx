@@ -636,6 +636,7 @@ export const ThreatPanel = () => {
   
   const threatsList = useMissionStore((s) => s.threats);
   const removeThreat = useMissionStore((s) => s.removeThreat);
+  const updateThreat = useMissionStore((s) => s.updateThreat);
   const terrainData = useMissionStore((s) => s.terrainData);
   const setActiveRightTab = useUIStore((s) => s.setActiveRightTab);
 
@@ -715,21 +716,37 @@ export const ThreatPanel = () => {
               Clear All
             </button>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {threatsList.map(t => (
-              <div key={t.id} className="flex justify-between items-center p-2.5 bg-bg-card/50 border border-red-500/10 rounded-lg">
-                <div>
-                  <div className="font-bold capitalize text-xs">{t.type.replace('_', ' ')}</div>
-                  <div className="text-[10px] text-text-secondary font-mono">
-                    [{t.position.lat.toFixed(4)}, {t.position.lng.toFixed(4)}]
+              <div key={t.id} className="p-3 bg-bg-card/50 border border-red-500/10 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <div className="font-bold capitalize text-xs">{t.type.replace('_', ' ')}</div>
+                    <div className="text-[10px] text-text-secondary font-mono">
+                      [{t.position.lat.toFixed(4)}, {t.position.lng.toFixed(4)}]
+                    </div>
                   </div>
+                  <button 
+                    onClick={() => handleDelete(t.id)}
+                    className="px-2 py-1 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 text-[10px] font-bold transition-colors"
+                  >
+                    Remove
+                  </button>
                 </div>
-                <button 
-                  onClick={() => handleDelete(t.id)}
-                  className="px-2 py-1 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 text-[10px] font-bold transition-colors"
-                >
-                  Remove
-                </button>
+                {/* Radius Slider */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-slate-500 uppercase tracking-wider w-12">Radius</span>
+                  <input
+                    type="range"
+                    min={50}
+                    max={800}
+                    step={25}
+                    value={t.radius}
+                    onChange={(e) => updateThreat(t.id, { radius: Number(e.target.value) })}
+                    className="flex-1 h-1 accent-red-500 cursor-pointer"
+                  />
+                  <span className="text-[10px] font-mono text-red-400 w-10 text-right">{t.radius}m</span>
+                </div>
               </div>
             ))}
           </div>
