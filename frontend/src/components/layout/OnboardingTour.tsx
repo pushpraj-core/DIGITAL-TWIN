@@ -70,45 +70,61 @@ export default function OnboardingTour() {
   const currentStep = steps[onboardingStep];
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-bg-primary/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-bg-primary/90 backdrop-blur-md">
+      {/* Cinematic background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+      
       <AnimatePresence mode="wait">
         <motion.div
           key={onboardingStep}
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.95 }}
-          transition={{ duration: 0.3 }}
-          className="bg-bg-card border border-cyan-500/30 rounded-xl shadow-[0_0_50px_rgba(0,240,255,0.15)] w-full max-w-lg overflow-hidden relative"
+          initial={{ opacity: 0, y: 30, scale: 0.95, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, y: -30, scale: 0.95, filter: 'blur(10px)' }}
+          transition={{ duration: 0.4, type: 'spring', bounce: 0.25 }}
+          className="bg-bg-card border border-cyan-500/30 rounded-xl shadow-[0_0_80px_rgba(0,240,255,0.15)] w-full max-w-lg overflow-hidden relative overflow-hidden"
         >
           {/* Top glowing bar */}
-          <div className="h-1 w-full bg-gradient-to-r from-cyan-500 to-emerald-500" />
+          <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-emerald-500 to-cyan-500 bg-[length:200%_auto] animate-[shimmerMove_2s_linear_infinite]" />
           
           <button 
             onClick={handleSkip}
-            className="absolute top-4 right-4 text-text-secondary hover:text-white transition-colors"
+            className="absolute top-4 right-4 text-text-secondary hover:text-white transition-colors p-1 rounded-md hover:bg-white/10"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="p-8 flex flex-col items-center text-center">
-            <div className="mb-6 p-4 rounded-full bg-bg-secondary border border-cyan-500/20 shadow-[0_0_30px_rgba(0,240,255,0.1)]">
+          <div className="p-8 flex flex-col items-center text-center relative z-10">
+            {/* Animated Icon Container */}
+            <motion.div 
+              initial={{ scale: 0.5, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+              className="mb-6 p-5 rounded-full bg-bg-secondary border border-cyan-500/20 shadow-[0_0_30px_rgba(0,240,255,0.1)] relative"
+            >
+              <div className="absolute inset-0 rounded-full border border-cyan-500/30 animate-ping opacity-20" style={{ animationDuration: '3s' }} />
               {currentStep.icon}
-            </div>
+            </motion.div>
             
             <h2 className="text-2xl font-bold text-white mb-4 glow-text">
               {currentStep.title}
             </h2>
             
-            <p className="text-text-secondary leading-relaxed mb-8">
+            <p className="text-text-secondary leading-relaxed mb-8 text-sm">
               {currentStep.description}
             </p>
 
             {/* Progress indicators */}
-            <div className="flex gap-2 mb-8">
+            <div className="flex gap-2.5 mb-8">
               {steps.map((_, idx) => (
                 <div 
                   key={idx} 
-                  className={`w-2 h-2 rounded-full transition-colors ${idx === onboardingStep ? 'bg-cyan-400' : 'bg-slate-700'}`}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    idx === onboardingStep 
+                      ? 'bg-cyan-400 scale-125 shadow-[0_0_10px_rgba(0,240,255,0.5)]' 
+                      : idx < onboardingStep 
+                        ? 'bg-cyan-500/40' 
+                        : 'bg-slate-700/50'
+                  }`}
                 />
               ))}
             </div>
@@ -116,15 +132,15 @@ export default function OnboardingTour() {
             <div className="flex w-full gap-4">
               <button 
                 onClick={handleSkip}
-                className="flex-1 py-3 px-4 rounded-lg border border-slate-700 text-text-secondary font-bold hover:bg-slate-800 transition-colors"
+                className="flex-1 py-3 px-4 rounded-lg border border-slate-700 text-text-secondary font-bold hover:bg-slate-800 hover:text-white transition-colors"
               >
                 Skip Tutorial
               </button>
               <button 
                 onClick={handleNext}
-                className="flex-1 py-3 px-4 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/30 font-bold flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 py-3 px-4 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/20 hover:shadow-[0_0_20px_rgba(0,240,255,0.2)] font-bold flex items-center justify-center gap-2 transition-all"
               >
-                {onboardingStep === steps.length - 1 ? 'Start Mission' : 'Next'}
+                {onboardingStep === steps.length - 1 ? 'Deploy OS' : 'Next'}
                 {onboardingStep < steps.length - 1 && <ChevronRight className="w-4 h-4" />}
               </button>
             </div>
