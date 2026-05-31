@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎯 Tactical Digital Twin + AI Mission Planner
+# Tactical Digital Twin OS
 
 ### AI-Powered Defense Simulation & Mission Planning Platform
 
@@ -19,65 +19,65 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    FRONTEND (React)                     │
 │  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │  Upload   │  │  Tactical    │  │   AI Insights    │  │
-│  │  Panel    │  │  Map (2D/3D) │  │   Panel          │  │
+│  │  Upload  │  │  Tactical    │  │   AI Insights    │  │
+│  │  Panel   │  │  Map (2D/3D) │  │   Panel          │  │
 │  └──────────┘  └──────────────┘  └──────────────────┘  │
 │  ┌──────────────────────────────────────────────────┐   │
-│  │              Mission Timeline                     │   │
+│  │              Mission Timeline                    │   │
 │  └──────────────────────────────────────────────────┘   │
 └─────────────────────┬───────────────────────────────────┘
                       │ REST API + WebSocket
 ┌─────────────────────┴───────────────────────────────────┐
-│                   BACKEND (FastAPI)                      │
-│  ┌─────────────┐ ┌──────────┐ ┌───────────────────┐    │
-│  │  Terrain     │ │  Risk    │ │  Movement         │    │
-│  │  Intelligence│ │  Engine  │ │  Planner           │    │
-│  ├─────────────┤ ├──────────┤ ├───────────────────┤    │
-│  │  Observation │ │ Threat   │ │  What-If          │    │
-│  │  Analysis    │ │ Injection│ │  Simulator         │    │
-│  ├─────────────┤ ├──────────┤ ├───────────────────┤    │
-│  │  Mission     │ │  AI      │ │  Report           │    │
-│  │  Replay      │ │ Assistant│ │  Generator         │    │
-│  └─────────────┘ └──────────┘ └───────────────────┘    │
+│                   BACKEND (FastAPI)                     │
+│  ┌─────────────┐ ┌──────────┐ ┌───────────────────┐     │
+│  │  Terrain    │ │  Risk    │ │  Movement         │     │
+│  │  Intelligence │  Engine  │ │  Planner          │     │
+│  ├─────────────┤ ├──────────┤ ├───────────────────┤     │
+│  │  Observation│ │  Threat  │ │  What-If          │     │
+│  │  Analysis   │ │ Injection│ │  Simulator        │     │
+│  ├─────────────┤ ├──────────┤ ├───────────────────┤     │
+│  │  Mission    │ │  AI      │ │  Report           │     │
+│  │  Replay     │ │ Assistant│ │  Generator        │     │
+│  └─────────────┘ └──────────┘ └───────────────────┘     │
 └─────────────────────┬───────────────────────────────────┘
                       │
 ┌─────────────────────┴───────────────────────────────────┐
-│              AI / ML MODELS                              │
+│              AI / ML MODELS                             │
 │  YOLOv8 │ SegFormer │ Random Forest │ NetworkX (A*)     │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Core Modules
+## Core Modules
 
 | # | Module | Description |
 |---|--------|-------------|
-| 1 | **Terrain Intelligence Engine** | Computer vision pipeline (YOLOv8 + SegFormer) for terrain segmentation and classification |
-| 2 | **Digital Twin Generator** | Interactive 2D/3D tactical map with terrain layers, overlays, and navigation networks |
-| 3 | **AI Risk Simulation Engine** | Predicts danger regions using visibility, terrain, and strategic analysis → risk heatmaps |
-| 4 | **Smart Movement Planner** | Multi-objective pathfinding (A*, Dijkstra) for stealth, fastest, safest routes |
-| 5 | **Observation Analysis System** | Line-of-sight, visibility cones, blind spot detection, vantage point ranking |
-| 6 | **AI Mission Replay Engine** | Timeline-based mission simulation with strategy comparison |
-| 7 | **Threat Injection Simulator** | Manual threat placement with automatic risk/path recalculation |
-| 8 | **What-If Simulation Engine** | Scenario-based re-simulation ("What if road is blocked?") |
-| 9 | **AI Assistant** | Natural language tactical queries with LLM + RAG |
+| 1 | **Terrain Intelligence Engine** | Computer vision pipeline (YOLOv8 + SegFormer) for terrain segmentation and classification. |
+| 2 | **Digital Twin Generator** | Interactive 2D/3D tactical map with terrain layers, overlays, and navigation networks. |
+| 3 | **AI Risk Simulation Engine** | Predicts danger regions using visibility, terrain, and strategic analysis to generate risk heatmaps. |
+| 4 | **Smart Movement Planner** | Multi-objective pathfinding (A*, Dijkstra) for stealth, fastest, and safest routes. |
+| 5 | **Observation Analysis System** | Line-of-sight, visibility cones, blind spot detection, and vantage point ranking. |
+| 6 | **AI Mission Replay Engine** | Timeline-based mission simulation with strategy comparison capabilities. |
+| 7 | **Threat Injection Simulator** | Manual and automated threat placement with automatic risk and path recalculation. |
+| 8 | **What-If Simulation Engine** | Scenario-based re-simulation (e.g., "Main Route Blocked", "Weather Deterioration", "Comms Jamming"). |
+| 9 | **AI Assistant** | Natural language tactical queries with LLM-ready context integration for over 15+ operational scenarios. |
 
-## 📦 Tech Stack
+## Tech Stack
 
 **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Leaflet, Deck.gl, Three.js, Zustand, Framer Motion
 
-**Backend:** FastAPI, Python 3.11+, PyTorch, OpenCV, Ultralytics YOLOv8, Scikit-Learn, NetworkX
+**Backend:** FastAPI, Python 3.11+, PyTorch, OpenCV, Ultralytics YOLOv8, Scikit-Learn, NetworkX, NumPy, SciPy
 
 **Database:** PostgreSQL + PostGIS (SQLite for development)
 
 **DevOps:** Docker, Docker Compose
 
-## 🛠️ Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -95,7 +95,8 @@ npm run dev
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Windows: venv\Scripts\activate
+# Unix/MacOS: source venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
@@ -105,16 +106,16 @@ uvicorn main:app --reload --port 8000
 docker-compose up --build
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── frontend/          # React + Vite + TypeScript
 │   └── src/
-│       ├── components/    # UI components
-│       ├── stores/        # Zustand state
-│       ├── hooks/         # Custom hooks
-│       ├── services/      # API client
-│       └── types/         # TypeScript types
+│       ├── components/# UI components
+│       ├── stores/    # Zustand state
+│       ├── hooks/     # Custom hooks
+│       ├── services/  # API client
+│       └── types/     # TypeScript types
 ├── backend/           # FastAPI + Python
 │   ├── engines/       # Core AI/ML engines
 │   ├── ml/            # Model wrappers
@@ -126,17 +127,17 @@ docker-compose up --build
 └── docs/              # Documentation
 ```
 
-## 📊 Features
+## Features
 
-- 🗺️ **Interactive Tactical Map** — Dark-themed 2D/3D map with military-grade overlays
-- 🔥 **Risk Heatmaps** — Real-time danger zone visualization (Green → Yellow → Red)
-- 🛤️ **Smart Routing** — AI-optimized paths for stealth, speed, or safety
-- 👁️ **Visibility Analysis** — Line-of-sight, blind spots, observation coverage
-- ⚔️ **Threat Simulation** — Place hostiles, recalculate everything automatically
-- 🤖 **AI Assistant** — Natural language tactical queries
-- 📋 **Mission Reports** — Auto-generated PDF mission briefs
+- **Interactive Tactical Map** — Dark-themed 2D/3D map with military-grade overlays and geospatial controls.
+- **Risk Heatmaps** — Real-time danger zone visualization.
+- **Smart Routing** — AI-optimized paths for stealth, speed, or safety.
+- **Visibility Analysis** — Line-of-sight, blind spots, and observation coverage computations.
+- **Threat Simulation** — Place hostiles and dynamically recalculate tactical advantages.
+- **AI Assistant** — Natural language tactical queries and automated operational advice.
+- **Mission Reports** — Auto-generated mission briefs and After Action Reports.
 
-## 📄 License
+## License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
