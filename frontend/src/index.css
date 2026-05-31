@@ -486,3 +486,27 @@ body {
   background: rgba(0, 240, 255, 0.2);
   border-radius: 2px;
 }
+
+/* Animated route path — marching ants effect */
+.animated-path {
+  animation: marchingAnts 1.5s linear infinite;
+}
+
+@keyframes marchingAnts {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+/* Threat marker pulse */
+@keyframes threatPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.7;
+  }
+}
+

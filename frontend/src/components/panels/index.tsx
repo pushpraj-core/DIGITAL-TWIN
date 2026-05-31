@@ -501,30 +501,61 @@ export const PathPlannerPanel = () => {
 
       {/* Route results */}
       {routes.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Route Results</div>
-          {routes.map(route => (
-            <button
-              key={route.id}
-              onClick={() => setSelectedRouteId(route.id)}
-              className={`w-full text-left p-3 rounded-lg border transition-all ${
-                selectedRouteId === route.id 
-                  ? 'border-cyan-500/40 bg-cyan-500/10 shadow-[0_0_15px_rgba(0,240,255,0.1)]' 
-                  : 'border-slate-700/50 bg-bg-card/50 hover:border-slate-600'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-3 h-3 rounded-full" style={{ background: route.color }} />
-                <span className="text-xs font-bold text-text-primary">{route.name}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] font-mono pl-5">
-                <div className="text-slate-400">Distance: <span className="text-slate-200">{route.distance.toFixed(2)}km</span></div>
-                <div className="text-slate-400">ETA: <span className="text-slate-200">{Math.round(route.estimated_time / 60)}min</span></div>
-                <div className="text-slate-400">Risk: <span className={route.risk_score > 0.5 ? 'text-red-400' : 'text-green-400'}>{(route.risk_score * 100).toFixed(0)}%</span></div>
-                <div className="text-slate-400">Exposure: <span className={route.exposure_score > 0.5 ? 'text-amber-400' : 'text-green-400'}>{(route.exposure_score * 100).toFixed(0)}%</span></div>
-              </div>
-            </button>
-          ))}
+        <div className="mt-4 space-y-2.5">
+          <div className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Route Results ({routes.length})</div>
+          {routes.map(route => {
+            const isActive = selectedRouteId === route.id;
+            const riskColor = route.risk_score > 0.6 ? 'text-red-400' : route.risk_score > 0.3 ? 'text-amber-400' : 'text-emerald-400';
+            const riskBg = route.risk_score > 0.6 ? 'bg-red-400' : route.risk_score > 0.3 ? 'bg-amber-400' : 'bg-emerald-400';
+            const concealment = route.exposure_score !== undefined ? (1 - route.exposure_score) : null;
+            const etaMins = Math.round(route.estimated_time / 60);
+            const etaHrs = Math.floor(etaMins / 60);
+            const etaRem = etaMins % 60;
+
+            return (
+              <button
+                key={route.id}
+                onClick={() => setSelectedRouteId(route.id)}
+                className={`w-full text-left p-3.5 rounded-lg border transition-all ${
+                  isActive
+                    ? 'border-cyan-500/40 bg-cyan-500/5 shadow-[0_0_15px_rgba(0,240,255,0.1)]'
+                    : 'border-slate-700/50 bg-bg-card/50 hover:border-slate-600'
+                }`}
+              >
+                {/* Route header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: route.color, boxShadow: isActive ? `0 0 8px ${route.color}` : 'none' }} />
+                  <span className="text-xs font-bold text-text-primary flex-1">{route.name}</span>
+                  <span className={`text-[10px] font-mono font-bold ${riskColor}`}>
+                    {(route.risk_score * 100).toFixed(0)}% risk
+                  </span>
+                </div>
+
+                {/* Risk bar */}
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mb-2.5">
+                  <div className={`h-full ${riskBg} rounded-full transition-all duration-500`} style={{ width: `${route.risk_score * 100}%` }} />
+                </div>
+
+                {/* Stats grid */}
+                <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
+                  <div className="p-1.5 bg-bg-secondary/50 rounded text-center">
+                    <div className="text-slate-200 font-bold">{route.distance.toFixed(2)}km</div>
+                    <div className="text-[8px] text-slate-500 uppercase">Distance</div>
+                  </div>
+                  <div className="p-1.5 bg-bg-secondary/50 rounded text-center">
+                    <div className="text-slate-200 font-bold">{etaHrs > 0 ? `${etaHrs}h ${etaRem}m` : `${etaMins}min`}</div>
+                    <div className="text-[8px] text-slate-500 uppercase">ETA</div>
+                  </div>
+                  <div className="p-1.5 bg-bg-secondary/50 rounded text-center">
+                    <div className={`font-bold ${concealment !== null && concealment > 0.5 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {concealment !== null ? `${(concealment * 100).toFixed(0)}%` : '—'}
+                    </div>
+                    <div className="text-[8px] text-slate-500 uppercase">Concealment</div>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
           <NextStepBanner text="Next: Run observation analysis on your route" targetTab="observation" />
         </div>
       )}
